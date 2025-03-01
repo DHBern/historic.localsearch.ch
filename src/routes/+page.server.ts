@@ -1,4 +1,4 @@
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { records } from '$lib/server/db/schema';
 import { eq, like } from 'drizzle-orm';

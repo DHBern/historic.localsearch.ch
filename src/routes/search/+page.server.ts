@@ -1,22 +1,31 @@
 import type { PageServerLoad, Actions } from './$types';
+import { db } from '$lib/server/db';
+import { records } from '$lib/server/db/schema';
+import { eq, like } from 'drizzle-orm';
+import { fail } from '@sveltejs/kit';
+import { z } from 'zod';
 
-export const load = (async ({ params }) => {
-	console.log(params);
+export const load = (async ({ url }) => {
+	console.log(url.searchParams.get('q'));
+	return { results: 'test' };
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
 	search: async (event) => {
 		const formData = await event.request.formData();
-		console.log('formData', formData);
-		// const promises = names.map((name) => {
-		// 	// const entries = db.select().from(records).where(eq(records.entityname1, name)).limit(10000);
-		// 	const entries = db
-		// 		.select()
-		// 		.from(records)
-		// 		.where(like(records.aggregatedcontent, `%${name}%`))
-		// 		.limit(10000);
-		// 	return entries;
-		// });
-		return { results: 'test' };
+		const searchString = formData.get('searchstring');
+		const schema = z.string().min(2).max(60);
+
+		// const entries = db.select().from(records).where(eq(records.entityname1, name)).limit(10000);
+		try {
+			const entries = db
+				.select()
+				.from(records)
+				.where(like(records.aggregatedcontent, `%${schema.parse(searchString)}%`))
+				.limit(10000);
+			return { results: await entries };
+		} catch (e: any) {
+			return fail(500, { error: e.message, searchString });
+		}
 	}
 };

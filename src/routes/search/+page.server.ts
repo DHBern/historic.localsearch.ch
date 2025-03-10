@@ -18,11 +18,21 @@ export const actions: Actions = {
 
 		// const entries = db.select().from(records).where(eq(records.entityname1, name)).limit(10000);
 		try {
+			// let results: Record<number, any[]> = {};
 			const entries = db
 				.select()
 				.from(records)
 				.where(like(records.aggregatedcontent, `%${schema.parse(searchString)}%`))
-				.limit(10000);
+				.limit(90000);
+			// (await entries).forEach((entry) => {
+			// 	if (entry.year !== null) {
+			// 		if (results[entry.year]) {
+			// 			results[entry.year].push(entry);
+			// 		} else {
+			// 			results[entry.year] = [entry];
+			// 		}
+			// 	}
+			// });
 			return { results: await entries };
 		} catch (e: any) {
 			return fail(500, { error: e.message, searchString });

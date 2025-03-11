@@ -23,7 +23,7 @@ export const actions: Actions = {
 				.select()
 				.from(records)
 				.where(like(records.aggregatedcontent, `%${schema.parse(searchString)}%`))
-				.limit(90000);
+				.limit(2500);
 			// (await entries).forEach((entry) => {
 			// 	if (entry.year !== null) {
 			// 		if (results[entry.year]) {

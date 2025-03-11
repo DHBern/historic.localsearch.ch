@@ -1,10 +1,8 @@
 <script lang="ts">
-	import type { PageServerData } from './$types';
 	import * as m from '$lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 
-	let data: PageServerData = $props();
 	let searchval = $state('');
 </script>
 

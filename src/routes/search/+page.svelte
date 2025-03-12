@@ -36,13 +36,15 @@
 		});
 		return sorted;
 	});
+	$inspect(form?.results);
 </script>
 
 <form method="POST" action="?/search" use:enhance>
 	<h2>Options</h2>
 	<label>
 		<span>{m.jasper_brown_rock_smooth()}</span>
-		<input type="number" min="0" max="100" />
+		<input type="number" min="1880" max="1950" defaultValue="1880" name="from" /> —
+		<input type="number" min="1880" max="1950" defaultValue="1950" name="to" />
 	</label>
 	<label>
 		<span>{m.ochre_salty_ocean_spray()}</span>

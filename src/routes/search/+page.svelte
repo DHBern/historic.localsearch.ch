@@ -4,8 +4,7 @@
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
-	$inspect(form);
+	let { form }: { data: PageData; form: ActionData } = $props();
 	let showresults = $state(20);
 	let visibleResults = $derived.by(() => {
 		let sorted: Record<

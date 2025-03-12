@@ -1,21 +1,21 @@
-import type { PageServerLoad, Actions } from './$types';
+import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { records } from '$lib/server/db/schema';
 import { and, like, between, SQL, asc, or } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
-export const load = (async ({ url }) => {
-	return { results: 'test' };
-}) satisfies PageServerLoad;
-
 export const actions: Actions = {
 	search: async (event) => {
 		const formData = await event.request.formData();
 		const searchString = formData.get('searchstring');
-		const schema = z.string().min(2).max(60);
-		const from = Number(formData.get('from'));
-		const to = Number(formData.get('to'));
+		const stringSchema = z.string().min(2).max(60);
+		const from = formData.has('from') ? Number(formData.get('from')) : 1880;
+		const to = formData.has('to') ? Number(formData.get('to')) : 1950;
+		const numberSchema = z.number().int().min(1880).max(1950);
+		if (!numberSchema.safeParse(from).success || !numberSchema.safeParse(to).success) {
+			return fail(400, { error: 'Invalid year range', from, to });
+		}
 
 		if (searchString === '') {
 			//Topical Search
@@ -29,7 +29,7 @@ export const actions: Actions = {
 			] as const;
 			let filters: SQL[] = [];
 			fieldNames.forEach((fieldName) => {
-				const parsed = schema.safeParse(formData.get(fieldName));
+				const parsed = stringSchema.safeParse(formData.get(fieldName));
 				if (parsed.success) {
 					filters.push(like(records[fieldName], `%${parsed.data}%`));
 				}
@@ -48,7 +48,7 @@ export const actions: Actions = {
 		} else {
 			//Full Text Search
 			try {
-				const parsedSearchString = `%${schema.parse(searchString)}%`;
+				const parsedSearchString = `%${stringSchema.parse(searchString)}%`;
 				const entries = db
 					.select()
 					.from(records)

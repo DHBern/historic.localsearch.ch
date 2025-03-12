@@ -76,6 +76,9 @@
 				max="1950"
 				defaultValue="1880"
 				bind:value={fromToFields[0]}
+				onchange={() => {
+					if (from > to) fromToFields[1] = from.toString();
+				}}
 				name="from"
 			/>
 			—
@@ -86,6 +89,9 @@
 				defaultValue="1950"
 				bind:value={fromToFields[1]}
 				name="to"
+				onchange={() => {
+					if (to < from) fromToFields[0] = to.toString();
+				}}
 			/>
 		</label>
 		<label>
@@ -107,71 +113,73 @@
 		</label>
 		<button type="submit">{m.ochre_salty_ocean_spray()}</button>
 	</div>
-	<div>
-		<h2>{m.garnet_red_gem_glow()}</h2>
-		<p>{m.moonstone_white_gem_gleam()}</p>
-		<label>
-			<h2>{m.ruby_smooth_glass_cut()}</h2>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.entityname1}
-				maxlength="60"
-				name="entityname1"
-			/>
-		</label>
-		<label>
-			<h2>{m.mint_bitter_leaf_chew()}</h2>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.entityname2}
-				maxlength="60"
-				name="entityname2"
-			/>
-		</label>
-		<label>
-			<h2>{m.indigo_hot_flame_flicker()}</h2>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.supplement}
-				maxlength="60"
-				name="supplement"
-			/>
-		</label>
-		<label>
-			<h2>{m.agate_soft_silk_weave()}</h2>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.street}
-				maxlength="60"
-				name="street"
-			/>
-		</label>
-		<label>
-			<h2>{m.jade_dull_stone_grind()}</h2>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.locality}
-				maxlength="60"
-				name="locality"
-			/>
-		</label>
-		<label>
-			<h2>{m.lavender_dim_shadow_hide()}</h2>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.phonenumber}
-				maxlength="60"
-				name="phonenumber"
-			/>
-		</label>
-		<button type="submit">{m.ochre_salty_ocean_spray()}</button>
-	</div>
+	{#if to < 1937 && from > 1911}
+		<div>
+			<h2>{m.garnet_red_gem_glow()}</h2>
+			<p>{m.moonstone_white_gem_gleam()}</p>
+			<label>
+				<h2>{m.ruby_smooth_glass_cut()}</h2>
+				<input
+					type="text"
+					onfocus={resetFullText}
+					bind:this={textfields.entityname1}
+					maxlength="60"
+					name="entityname1"
+				/>
+			</label>
+			<label>
+				<h2>{m.mint_bitter_leaf_chew()}</h2>
+				<input
+					type="text"
+					onfocus={resetFullText}
+					bind:this={textfields.entityname2}
+					maxlength="60"
+					name="entityname2"
+				/>
+			</label>
+			<label>
+				<h2>{m.indigo_hot_flame_flicker()}</h2>
+				<input
+					type="text"
+					onfocus={resetFullText}
+					bind:this={textfields.supplement}
+					maxlength="60"
+					name="supplement"
+				/>
+			</label>
+			<label>
+				<h2>{m.agate_soft_silk_weave()}</h2>
+				<input
+					type="text"
+					onfocus={resetFullText}
+					bind:this={textfields.street}
+					maxlength="60"
+					name="street"
+				/>
+			</label>
+			<label>
+				<h2>{m.jade_dull_stone_grind()}</h2>
+				<input
+					type="text"
+					onfocus={resetFullText}
+					bind:this={textfields.locality}
+					maxlength="60"
+					name="locality"
+				/>
+			</label>
+			<label>
+				<h2>{m.lavender_dim_shadow_hide()}</h2>
+				<input
+					type="text"
+					onfocus={resetFullText}
+					bind:this={textfields.phonenumber}
+					maxlength="60"
+					name="phonenumber"
+				/>
+			</label>
+			<button type="submit">{m.ochre_salty_ocean_spray()}</button>
+		</div>
+	{/if}
 </form>
 
 {#if Object.keys(visibleResults).length > 0}

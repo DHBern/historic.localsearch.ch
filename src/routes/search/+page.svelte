@@ -40,24 +40,55 @@
 </script>
 
 <form method="POST" action="?/search" use:enhance>
-	<h2>Options</h2>
-	<label>
-		<span>{m.jasper_brown_rock_smooth()}</span>
-		<input type="number" min="1880" max="1950" defaultValue="1880" name="from" /> —
-		<input type="number" min="1880" max="1950" defaultValue="1950" name="to" />
-	</label>
-	<label>
-		<span>{m.ochre_salty_ocean_spray()}</span>
-		<select>
-			<option value="0">{m.bronze_cool_rain_drop()}</option>
-			<option value="1">{m.purple_fast_dog_run()}</option>
-		</select>
-	</label>
-	<label>
-		<h2>{m.lime_sweet_fruit_taste()}</h2>
-		<input type="text" maxlength="60" name="searchstring" />
-	</label>
-	<button type="submit">{m.ochre_salty_ocean_spray()}</button>
+	<div>
+		<h2>{m.emerald_soft_wood_carve()}</h2>
+		<label>
+			<span>{m.jasper_brown_rock_smooth()}</span>
+			<input type="number" min="1880" max="1950" defaultValue="1880" name="from" /> —
+			<input type="number" min="1880" max="1950" defaultValue="1950" name="to" />
+		</label>
+		<label>
+			<span>{m.ochre_salty_ocean_spray()}</span>
+			<select>
+				<option value="0">{m.bronze_cool_rain_drop()}</option>
+				<option value="1">{m.purple_fast_dog_run()}</option>
+			</select>
+		</label>
+		<label>
+			<h2>{m.lime_sweet_fruit_taste()}</h2>
+			<input type="text" maxlength="60" name="searchstring" />
+		</label>
+		<button type="submit">{m.ochre_salty_ocean_spray()}</button>
+	</div>
+	<div>
+		<h2>{m.garnet_red_gem_glow()}</h2>
+		<p>{m.moonstone_white_gem_gleam()}</p>
+		<label>
+			<h2>{m.ruby_smooth_glass_cut()}</h2>
+			<input type="text" maxlength="60" name="entityname1" />
+		</label>
+		<label>
+			<h2>{m.mint_bitter_leaf_chew()}</h2>
+			<input type="text" maxlength="60" name="entityname2" />
+		</label>
+		<label>
+			<h2>{m.indigo_hot_flame_flicker()}</h2>
+			<input type="text" maxlength="60" name="supplement" />
+		</label>
+		<label>
+			<h2>{m.agate_soft_silk_weave()}</h2>
+			<input type="text" maxlength="60" name="street" />
+		</label>
+		<label>
+			<h2>{m.jade_dull_stone_grind()}</h2>
+			<input type="text" maxlength="60" name="locality" />
+		</label>
+		<label>
+			<h2>{m.lavender_dim_shadow_hide()}</h2>
+			<input type="text" maxlength="60" name="phonenumber" />
+		</label>
+		<button type="submit">{m.ochre_salty_ocean_spray()}</button>
+	</div>
 </form>
 
 {#if Object.keys(visibleResults).length > 0}

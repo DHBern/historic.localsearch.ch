@@ -32,7 +32,8 @@ export const actions: Actions = {
 							like(records.supplement, parsedSearchString),
 							like(records.street, parsedSearchString),
 							like(records.locality, parsedSearchString),
-							like(records.phonenumber, parsedSearchString)
+							like(records.phonenumber, parsedSearchString),
+							like(records.aggregatedcontent, parsedSearchString)
 						),
 						between(records.year, from, to)
 					)

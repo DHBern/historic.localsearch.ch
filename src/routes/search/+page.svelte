@@ -99,7 +99,7 @@
 							href="https://iiif.ptt-archiv.ch/iiif/3/{result.file?.replaceAll(
 								'\u{0065}\u{0300}',
 								'\u{00e8}'
-							)}_{String(result.page).padStart(3, '0')}.jp2/full/max/0/default.jpg"
+							)}_{String(result.page).padStart(4, '0')}.jp2/full/max/0/default.jpg"
 							target="_blank">{result?.page}</a
 						>
 					</dd>

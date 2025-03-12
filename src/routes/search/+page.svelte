@@ -36,7 +36,6 @@
 		});
 		return sorted;
 	});
-	$inspect(form?.results);
 	const resetFullText = (event: Event) => {
 		if (textfields?.searchstring) {
 			textfields.searchstring.value = '';
@@ -94,13 +93,14 @@
 				}}
 			/>
 		</label>
-		<label>
+		<!-- fuzzy search is non functional atm -->
+		<!-- <label>
 			<span>{m.ochre_salty_ocean_spray()}</span>
 			<select>
 				<option value="0">{m.bronze_cool_rain_drop()}</option>
 				<option value="1">{m.purple_fast_dog_run()}</option>
 			</select>
-		</label>
+		</label> -->
 		<label>
 			<h2>{m.lime_sweet_fruit_taste()}</h2>
 			<input

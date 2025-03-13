@@ -44,7 +44,7 @@ button {
 }
 html,
 body {
-	@apply h-full overflow-hidden;
+	@apply h-full;
 }
 body {
 	background-color: #000; /* Postal yellow: rgb(255, 204, 0); Gray: #F0F0F0; */

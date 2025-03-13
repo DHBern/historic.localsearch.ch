@@ -1,3 +1,69 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
-@import 'tailwindcss/utilities'
+@import 'tailwindcss/utilities';
+
+@font-face {
+	font-family: 'Favorit Regular';
+	src:
+		url('/ABCFavorit-Regular.woff2') format('woff2'),
+		url('/ABCFavorit-Regular.woff') format('woff');
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Favorit Bold';
+	src:
+		url('/ABCFavorit-Bold.woff2') format('woff2'),
+		url('/ABCFavorit-Bold.woff') format('woff');
+	font-display: swap;
+}
+
+h1 {
+	font-family: 'Favorit Bold', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
+	font-size: 1.5rem;
+	line-height: 1.5rem;
+	color: #fff;
+	text-shadow: 0px 0px 5px #000;
+}
+
+h2 {
+	font-family: 'Favorit Bold', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
+	font-size: 1rem;
+	line-height: 1.5rem;
+	color: #fff;
+}
+
+p,
+td,
+input,
+button {
+	font-family: 'Favorit Regular', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
+	font-size: 1rem;
+	line-height: 1.2rem;
+	color: #fff;
+}
+html,
+body {
+	@apply h-full overflow-hidden;
+}
+body {
+	background-color: #000; /* Postal yellow: rgb(255, 204, 0); Gray: #F0F0F0; */
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	font-family: 'Favorit Regular', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
+	font-weight: normal;
+	font-size: 1rem;
+	line-height: 1.5rem;
+	color: #fff;
+	text-align: left;
+	&:has([data-splash='1']) {
+		background-image: url('$lib/img/splash1.jpg');
+	}
+	&:has([data-splash='2']) {
+		background-image: url('$lib/img/splash2.jpg');
+	}
+	&:has([data-splash='3']) {
+		background-image: url('$lib/img/splash3.jpg');
+	}
+}

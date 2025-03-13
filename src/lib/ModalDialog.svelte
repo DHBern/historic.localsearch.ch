@@ -1,13 +1,10 @@
-<script>
+<script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
-	const {
-		// provided by <Modals />
-		isOpen,
-		close,
+	import type { ModalProps } from 'svelte-modals';
 
-		// custom props
-		type
-	} = $props();
+	const props = $props();
+	const { type } = props as ModalProps<'about' | 'help'>;
+	const { close, isOpen } = props;
 </script>
 
 {#if isOpen}

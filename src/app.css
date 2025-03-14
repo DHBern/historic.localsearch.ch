@@ -22,15 +22,13 @@ h1 {
 	font-family: 'Favorit Bold', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
 	font-size: 1.5rem;
 	line-height: 1.5rem;
-	color: #fff;
-	text-shadow: 0px 0px 5px #000;
+	/* text-shadow: 0px 0px 5px #000; */
 }
 
 h2 {
 	font-family: 'Favorit Bold', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
 	font-size: 1rem;
 	line-height: 1.5rem;
-	color: #fff;
 }
 
 p,
@@ -46,7 +44,10 @@ body {
 	@apply h-full;
 }
 body {
-	background-color: #000; /* Postal yellow: rgb(255, 204, 0); Gray: #F0F0F0; */
+	--primary: #fff;
+	--primary-bg: #000;
+	background-color: var(--primary-bg);
+	color: var(--primary);
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;
@@ -54,7 +55,6 @@ body {
 	font-weight: normal;
 	font-size: 1rem;
 	line-height: 1.5rem;
-	color: #fff;
 	text-align: left;
 	&:has([data-splash='1']) {
 		background-image: url('$lib/img/splash1.jpg');
@@ -64,5 +64,9 @@ body {
 	}
 	&:has([data-splash='3']) {
 		background-image: url('$lib/img/splash3.jpg');
+	}
+	&:has([data-bg-color='white']) {
+		--primary: #000;
+		--primary-bg: #fff;
 	}
 }

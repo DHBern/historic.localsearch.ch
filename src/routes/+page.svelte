@@ -4,7 +4,10 @@
 	import arrowRight from '$lib/img/icon-arrow-right.svg';
 </script>
 
-<div class="fixed left-2/4 top-2/4 -translate-x-2/4 -translate-y-2/4 transform">
+<div
+	data-bg-color="black"
+	class="fixed left-2/4 top-2/4 -translate-x-2/4 -translate-y-2/4 transform"
+>
 	<h2 data-splash={Math.round(Math.random() * (3 - 1) + 1)} class="text-2xl">
 		{m.khaki_wet_mud_squish()}
 	</h2>

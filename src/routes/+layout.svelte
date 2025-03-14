@@ -31,6 +31,9 @@
 </Modals>
 
 <style>
+	:global(body:has([data-bg-color='white'])) footer {
+		background-color: black;
+	}
 	.backdrop {
 		position: fixed;
 		top: 0;

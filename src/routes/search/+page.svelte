@@ -63,8 +63,14 @@
 	const to = $derived(Number(fromToFields[1]));
 </script>
 
-<form method="POST" action="?/search" use:enhance>
-	<div>
+<form
+	method="POST"
+	class="container mx-auto flex justify-center"
+	action="?/search"
+	data-bg-color="white"
+	use:enhance
+>
+	<div class="box">
 		<h2>{m.emerald_soft_wood_carve()}</h2>
 		<label>
 			<span>{m.jasper_brown_rock_smooth()}</span>
@@ -112,8 +118,8 @@
 		</label>
 		<button type="submit">{m.ochre_salty_ocean_spray()}</button>
 	</div>
-	{#if to < 1937 && from > 1911}
-		<div>
+	{#if to <= 1937 && from >= 1911}
+		<div class="box">
 			<h2>{m.garnet_red_gem_glow()}</h2>
 			<p>{m.moonstone_white_gem_gleam()}</p>
 			<label>
@@ -244,3 +250,14 @@
 	{/each}
 	<button onclick={() => (showresults += 20)}>{m.cobalt_foggy_forest_whisper()}</button>
 {/if}
+
+<style>
+	.box {
+		width: 330px;
+		box-shadow: 10px 10px 5px #aaa;
+		background-color: #fdfd03;
+		border: 1px solid #848484;
+		border-radius: 1em;
+		padding: 1rem;
+	}
+</style>

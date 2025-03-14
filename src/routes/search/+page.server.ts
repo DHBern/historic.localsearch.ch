@@ -34,6 +34,9 @@ export const actions: Actions = {
 					filters.push(like(records[fieldName], `%${parsed.data}%`));
 				}
 			});
+			if (filters.length === 0) {
+				return fail(400, { error: 'No search criteria provided' });
+			}
 			try {
 				const entries = db
 					.select()

@@ -1,7 +1,7 @@
 import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { records } from '$lib/server/db/schema';
-import { and, like, between, SQL, asc, or } from 'drizzle-orm';
+import { and, between, SQL, asc, or, ilike } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -31,7 +31,7 @@ export const actions: Actions = {
 			fieldNames.forEach((fieldName) => {
 				const parsed = stringSchema.safeParse(formData.get(fieldName));
 				if (parsed.success) {
-					filters.push(like(records[fieldName], `%${parsed.data}%`));
+					filters.push(ilike(records[fieldName], `%${parsed.data}%`));
 				}
 			});
 			if (filters.length === 0) {
@@ -58,13 +58,13 @@ export const actions: Actions = {
 					.where(
 						and(
 							or(
-								like(records.entityname1, parsedSearchString),
-								like(records.entityname2, parsedSearchString),
-								like(records.supplement, parsedSearchString),
-								like(records.street, parsedSearchString),
-								like(records.locality, parsedSearchString),
-								like(records.phonenumber, parsedSearchString),
-								like(records.aggregatedcontent, parsedSearchString)
+								ilike(records.entityname1, parsedSearchString),
+								ilike(records.entityname2, parsedSearchString),
+								ilike(records.supplement, parsedSearchString),
+								ilike(records.street, parsedSearchString),
+								ilike(records.locality, parsedSearchString),
+								ilike(records.phonenumber, parsedSearchString),
+								ilike(records.aggregatedcontent, parsedSearchString)
 							),
 							between(records.year, from, to)
 						)

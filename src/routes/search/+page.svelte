@@ -213,7 +213,9 @@
 			type="submit"
 		>
 			{#if loading}
-				insert loading spinner here
+				<span in:typewriter={{ speed: 80 }}>
+					{@html m.chartreuse_cool_wind_whisper()}
+				</span>
 			{:else}
 				{m.ochre_salty_ocean_spray()}
 			{/if}
@@ -244,41 +246,51 @@
 							{/if}
 						</p>
 					{/if}
-					<dl>
+					<dl class="flex flex-wrap gap-2">
+						{#if result.network}
+							<div>
+								<dt>{m.sapphire_rough_metal_bend()}</dt>
+								<dd>{result?.network}</dd>
+							</div>
+						{/if}
 						{#if result.file}
-							<dt>{m.plum_dark_night_fall()}</dt>
-							<dd>
-								<a
-									href="https://mfk.rechercheonline.ch/de/research/records/pttarchiv:{(
-										pdfIds as Record<string, number>
-									)[result.file]}"
-									target="_blank">{result.file}</a
-								>
-							</dd>
+							<div>
+								<dt>{m.plum_dark_night_fall()}</dt>
+								<dd>
+									<a
+										href="https://mfk.rechercheonline.ch/de/research/records/pttarchiv:{(
+											pdfIds as Record<string, number>
+										)[result.file]}"
+										target="_blank">{result.file}</a
+									>
+								</dd>
+							</div>
 						{/if}
 						{#if result.page}
-							<dt>{m.topaz_hard_clay_mold()}</dt>
-							<dd>
-								<a
-									href="https://iiif.ptt-archiv.ch/iiif/3/{result.file?.replaceAll(
-										'\u{0065}\u{0300}',
-										'\u{00e8}'
-									)}_{String(result.page).padStart(4, '0')}.jp2/full/max/0/default.jpg"
-									target="_blank">{result?.page}</a
-								>
-							</dd>
-						{/if}
-						{#if result.network}
-							<dt>{m.sapphire_rough_metal_bend()}</dt>
-							<dd>{result?.network}</dd>
+							<div>
+								<dt>{m.topaz_hard_clay_mold()}</dt>
+								<dd>
+									<a
+										href="https://iiif.ptt-archiv.ch/iiif/3/{result.file?.replaceAll(
+											'\u{0065}\u{0300}',
+											'\u{00e8}'
+										)}_{String(result.page).padStart(4, '0')}.jp2/full/max/0/default.jpg"
+										target="_blank">{result?.page}</a
+									>
+								</dd>
+							</div>
 						{/if}
 						{#if result.supplement}
-							<dt>{m.opal_rough_gravel_scatter()}</dt>
-							<dd>{result?.supplement}</dd>
+							<div>
+								<dt>{m.opal_rough_gravel_scatter()}</dt>
+								<dd>{result?.supplement}</dd>
+							</div>
 						{/if}
 						{#if result.aggregatedcontent}
-							<dt>{m.periwinkle_bitter_tea_brew()}</dt>
-							<dd>{result?.aggregatedcontent}</dd>
+							<div>
+								<dt>{m.periwinkle_bitter_tea_brew()}</dt>
+								<dd>{result?.aggregatedcontent}</dd>
+							</div>
 						{/if}
 					</dl>
 				</div>
@@ -319,5 +331,25 @@
 		input[type='text'] {
 			width: 370px;
 		}
+	}
+
+	dt {
+		display: inline;
+		margin: 0 0.3em 0 0em;
+		padding: 0 0.3em 0 0.3em;
+		font-family: 'Favorit Bold', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
+		font-size: 0.75em;
+		font-variant-caps: all-small-caps;
+		letter-spacing: 0.1em;
+		color: #000;
+		background-color: rgb(200 223 190);
+	}
+
+	dd {
+		display: inline;
+	}
+
+	a {
+		border-bottom: 1px solid #000;
 	}
 </style>

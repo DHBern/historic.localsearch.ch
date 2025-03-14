@@ -65,12 +65,12 @@
 
 <form
 	method="POST"
-	class="container mx-auto flex justify-center"
+	class="container mx-auto flex flex-col justify-center"
 	action="?/search"
 	data-bg-color="white"
 	use:enhance
 >
-	<div class="box">
+	<div class="box mx-auto w-fit p-10 md:px-16">
 		<h2>{m.emerald_soft_wood_carve()}</h2>
 		<label>
 			<span>{m.jasper_brown_rock_smooth()}</span>
@@ -116,74 +116,68 @@
 				name="searchstring"
 			/>
 		</label>
-		<button type="submit">{m.ochre_salty_ocean_spray()}</button>
 	</div>
+	<button
+		class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
+		type="submit">{m.ochre_salty_ocean_spray()}</button
+	>
 	{#if to <= 1937 && from >= 1911}
-		<div class="box">
+		<div class="box mx-auto w-fit p-10 md:px-16">
 			<h2>{m.garnet_red_gem_glow()}</h2>
 			<p>{m.moonstone_white_gem_gleam()}</p>
-			<label>
-				<h2>{m.ruby_smooth_glass_cut()}</h2>
-				<input
-					type="text"
-					onfocus={resetFullText}
-					bind:this={textfields.entityname1}
-					maxlength="60"
-					name="entityname1"
-				/>
-			</label>
-			<label>
-				<h2>{m.mint_bitter_leaf_chew()}</h2>
-				<input
-					type="text"
-					onfocus={resetFullText}
-					bind:this={textfields.entityname2}
-					maxlength="60"
-					name="entityname2"
-				/>
-			</label>
-			<label>
-				<h2>{m.indigo_hot_flame_flicker()}</h2>
-				<input
-					type="text"
-					onfocus={resetFullText}
-					bind:this={textfields.supplement}
-					maxlength="60"
-					name="supplement"
-				/>
-			</label>
-			<label>
-				<h2>{m.agate_soft_silk_weave()}</h2>
-				<input
-					type="text"
-					onfocus={resetFullText}
-					bind:this={textfields.street}
-					maxlength="60"
-					name="street"
-				/>
-			</label>
-			<label>
-				<h2>{m.jade_dull_stone_grind()}</h2>
-				<input
-					type="text"
-					onfocus={resetFullText}
-					bind:this={textfields.locality}
-					maxlength="60"
-					name="locality"
-				/>
-			</label>
-			<label>
-				<h2>{m.lavender_dim_shadow_hide()}</h2>
-				<input
-					type="text"
-					onfocus={resetFullText}
-					bind:this={textfields.phonenumber}
-					maxlength="60"
-					name="phonenumber"
-				/>
-			</label>
-			<button type="submit">{m.ochre_salty_ocean_spray()}</button>
+			<input
+				type="text"
+				onfocus={resetFullText}
+				bind:this={textfields.entityname1}
+				maxlength="60"
+				name="entityname1"
+				placeholder={m.ruby_smooth_glass_cut()}
+			/>
+			<input
+				type="text"
+				onfocus={resetFullText}
+				bind:this={textfields.entityname2}
+				maxlength="60"
+				name="entityname2"
+				placeholder={m.mint_bitter_leaf_chew()}
+			/>
+			<input
+				type="text"
+				onfocus={resetFullText}
+				bind:this={textfields.supplement}
+				maxlength="60"
+				name="supplement"
+				placeholder={m.indigo_hot_flame_flicker()}
+			/>
+			<input
+				type="text"
+				onfocus={resetFullText}
+				bind:this={textfields.street}
+				maxlength="60"
+				name="street"
+				placeholder={m.agate_soft_silk_weave()}
+			/>
+			<input
+				type="text"
+				onfocus={resetFullText}
+				bind:this={textfields.locality}
+				maxlength="60"
+				name="locality"
+				placeholder={m.jade_dull_stone_grind()}
+			/>
+			<input
+				type="text"
+				onfocus={resetFullText}
+				bind:this={textfields.phonenumber}
+				maxlength="60"
+				name="phonenumber"
+				placeholder={m.lavender_dim_shadow_hide()}
+			/>
 		</div>
+		<button
+			class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
+			type="submit">{m.ochre_salty_ocean_spray()}</button
+		>
 	{/if}
 </form>
 
@@ -253,11 +247,21 @@
 
 <style>
 	.box {
-		width: 330px;
 		box-shadow: 10px 10px 5px #aaa;
 		background-color: #fdfd03;
 		border: 1px solid #848484;
 		border-radius: 1em;
-		padding: 1rem;
+	}
+	input[type='text'] {
+		width: 300px;
+		padding: 1px 2px 1px 10px;
+		border-width: 0 0 1px 0;
+		border-style: solid;
+		line-height: 1.5em;
+	}
+	@media screen and (min-width: 780px) {
+		input[type='text'] {
+			width: 370px;
+		}
 	}
 </style>

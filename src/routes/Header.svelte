@@ -8,11 +8,11 @@
 	}
 </script>
 
-<header class="flex justify-between p-7">
+<header class="flex flex-wrap items-center justify-center gap-4 p-7 md:justify-between">
 	<h1 class="header-content">
 		<a href={localizeHref('/')}>historic.localsearch</a>
 	</h1>
-	<nav class="flex gap-8">
+	<nav class="flex gap-4 md:gap-8">
 		<button
 			class="h-10 rounded-full border border-current px-4"
 			onclick={() => handleClick('about')}>{m.blue_short_bird_fly()}</button

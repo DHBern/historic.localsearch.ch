@@ -8,19 +8,23 @@
 	import localsearch from '$lib/img/logo_localsearch_negative.svg';
 </script>
 
-<Header />
-{@render children()}
-<footer class="fixed bottom-0 flex w-screen justify-around pb-3 pt-7">
-	<a href="https://www.mfk.ch/forschen/ptt-archiv" target="_blank">
-		<img class="h-[80px] w-auto" src={ptt} alt="PTT Archiv" />
-	</a>
-	<a href="https://www.dh.unibe.ch" target="_blank">
-		<img class="h-[80px] w-auto" src={unibe} alt="Universität Bern" />
-	</a>
-	<a href="https://www.localsearch.ch" target="_blank">
-		<img class="h-[50px] w-auto" src={localsearch} alt="localsearch" />
-	</a>
-</footer>
+<div class="flex h-screen flex-col overflow-y-auto">
+	<Header />
+	<div class="flex-grow">
+		{@render children()}
+	</div>
+	<footer class="flex w-screen justify-around pb-3 pt-7">
+		<a href="https://www.mfk.ch/forschen/ptt-archiv" target="_blank">
+			<img class="h-[80px] w-auto" src={ptt} alt="PTT Archiv" />
+		</a>
+		<a href="https://www.dh.unibe.ch" target="_blank">
+			<img class="h-[80px] w-auto" src={unibe} alt="Universität Bern" />
+		</a>
+		<a href="https://www.localsearch.ch" target="_blank">
+			<img class="h-[50px] w-auto" src={localsearch} alt="localsearch" />
+		</a>
+	</footer>
+</div>
 <Modals>
 	<!-- shown when any modal is opened -->
 	{#snippet backdrop({ close })}

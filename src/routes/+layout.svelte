@@ -10,7 +10,7 @@
 
 <div class="flex h-screen flex-col overflow-y-auto">
 	<Header />
-	<div class="flex-grow">
+	<div class="flex-grow p-6">
 		{@render children()}
 	</div>
 	<footer class="flex w-screen justify-around pb-3 pt-7">

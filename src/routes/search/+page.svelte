@@ -70,42 +70,44 @@
 	data-bg-color="white"
 	use:enhance
 >
-	<div class="box mx-auto w-fit p-10 md:px-16">
-		<h2>{m.emerald_soft_wood_carve()}</h2>
-		<label>
-			<span>{m.jasper_brown_rock_smooth()}</span>
-			<input
-				type="number"
-				min="1880"
-				max="1950"
-				defaultValue="1880"
-				bind:value={fromToFields[0]}
-				onchange={() => {
-					if (from > to) fromToFields[1] = from.toString();
-				}}
-				name="from"
-			/>
-			—
-			<input
-				type="number"
-				min="1880"
-				max="1950"
-				defaultValue="1950"
-				bind:value={fromToFields[1]}
-				name="to"
-				onchange={() => {
-					if (to < from) fromToFields[0] = to.toString();
-				}}
-			/>
-		</label>
-		<!-- fuzzy search is non functional atm -->
-		<!-- <label>
+	<div class="box mx-auto flex w-full flex-col items-center px-4 pb-10 sm:w-fit md:px-16">
+		<div class="w-[300px] md:w-[370px]">
+			<h2>{m.emerald_soft_wood_carve()}</h2>
+			<label>
+				<span>{m.jasper_brown_rock_smooth()}</span>
+				<input
+					type="number"
+					min="1880"
+					max="1950"
+					defaultValue="1880"
+					bind:value={fromToFields[0]}
+					onchange={() => {
+						if (from > to) fromToFields[1] = from.toString();
+					}}
+					name="from"
+				/>
+				—
+				<input
+					type="number"
+					min="1880"
+					max="1950"
+					defaultValue="1950"
+					bind:value={fromToFields[1]}
+					name="to"
+					onchange={() => {
+						if (to < from) fromToFields[0] = to.toString();
+					}}
+				/>
+			</label>
+			<!-- fuzzy search is non functional atm -->
+			<!-- <label>
 			<span>{m.ochre_salty_ocean_spray()}</span>
 			<select>
 				<option value="0">{m.bronze_cool_rain_drop()}</option>
 				<option value="1">{m.purple_fast_dog_run()}</option>
 			</select>
 		</label> -->
+		</div>
 		<label>
 			<h2>{m.lime_sweet_fruit_taste()}</h2>
 			<input
@@ -121,64 +123,72 @@
 		class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
 		type="submit">{m.ochre_salty_ocean_spray()}</button
 	>
-	{#if to <= 1937 && from >= 1911}
-		<div class="box mx-auto w-fit p-10 md:px-16">
+	<!-- {#if to <= 1937 && from >= 1911} -->
+	<div class="box mx-auto flex w-full flex-col items-center px-4 pb-10 sm:w-fit md:px-16">
+		<div class="w-[300px] md:w-[370px]">
 			<h2>{m.garnet_red_gem_glow()}</h2>
 			<p>{m.moonstone_white_gem_gleam()}</p>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.entityname1}
-				maxlength="60"
-				name="entityname1"
-				placeholder={m.ruby_smooth_glass_cut()}
-			/>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.entityname2}
-				maxlength="60"
-				name="entityname2"
-				placeholder={m.mint_bitter_leaf_chew()}
-			/>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.supplement}
-				maxlength="60"
-				name="supplement"
-				placeholder={m.indigo_hot_flame_flicker()}
-			/>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.street}
-				maxlength="60"
-				name="street"
-				placeholder={m.agate_soft_silk_weave()}
-			/>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.locality}
-				maxlength="60"
-				name="locality"
-				placeholder={m.jade_dull_stone_grind()}
-			/>
-			<input
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.phonenumber}
-				maxlength="60"
-				name="phonenumber"
-				placeholder={m.lavender_dim_shadow_hide()}
-			/>
 		</div>
-		<button
-			class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
-			type="submit">{m.ochre_salty_ocean_spray()}</button
-		>
-	{/if}
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.entityname1}
+			maxlength="60"
+			name="entityname1"
+			placeholder={m.ruby_smooth_glass_cut()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.entityname2}
+			maxlength="60"
+			name="entityname2"
+			placeholder={m.mint_bitter_leaf_chew()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.supplement}
+			maxlength="60"
+			name="supplement"
+			placeholder={m.indigo_hot_flame_flicker()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.street}
+			maxlength="60"
+			name="street"
+			placeholder={m.agate_soft_silk_weave()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.locality}
+			maxlength="60"
+			name="locality"
+			placeholder={m.jade_dull_stone_grind()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.phonenumber}
+			maxlength="60"
+			name="phonenumber"
+			placeholder={m.lavender_dim_shadow_hide()}
+		/>
+	</div>
+	<button
+		class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
+		type="submit">{m.ochre_salty_ocean_spray()}</button
+	>
+	<!-- {/if} -->
 </form>
 
 {#if Object.keys(visibleResults).length > 0}
@@ -245,7 +255,7 @@
 	<button onclick={() => (showresults += 20)}>{m.cobalt_foggy_forest_whisper()}</button>
 {/if}
 
-<style>
+<style lang="postcss">
 	.box {
 		box-shadow: 10px 10px 5px #aaa;
 		background-color: #fdfd03;
@@ -254,6 +264,19 @@
 	}
 	input[type='text'] {
 		width: 300px;
+	}
+	label span {
+		@apply pr-4;
+	}
+	h2 {
+		font-size: 1.5em;
+		line-height: 1.5em;
+		font-weight: 700;
+		margin: 5px 0 5px 0;
+		font-family: 'Favorit Regular', Helvetica, Arial, Geneva, Verdana, Tahoma, sans-serif;
+		@apply mt-6;
+	}
+	input {
 		padding: 1px 2px 1px 10px;
 		border-width: 0 0 1px 0;
 		border-style: solid;

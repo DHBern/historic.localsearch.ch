@@ -8,7 +8,7 @@
 	}
 </script>
 
-<header class="m-7 flex justify-between">
+<header class="flex justify-between p-7">
 	<h1 class="header-content">
 		<a href={localizeHref('/')}>historic.localsearch</a>
 	</h1>

@@ -289,7 +289,7 @@
 						{#if result.aggregatedcontent}
 							<div>
 								<dt>{m.periwinkle_bitter_tea_brew()}</dt>
-								<dd>{result?.aggregatedcontent}</dd>
+								<dd>{@html result?.aggregatedcontent}</dd>
 							</div>
 						{/if}
 					</dl>

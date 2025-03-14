@@ -8,7 +8,7 @@ import { z } from 'zod';
 export const actions: Actions = {
 	search: async (event) => {
 		const formData = await event.request.formData();
-		const searchString = formData.get('searchstring');
+		const searchString = formData.get('searchstring') as string | null;
 		const stringSchema = z.string().min(2).max(60);
 		const from = formData.has('from') ? Number(formData.get('from')) : 1880;
 		const to = formData.has('to') ? Number(formData.get('to')) : 1950;
@@ -17,7 +17,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid year range', from, to });
 		}
 
-		if (searchString === '') {
+		if (searchString === '' || searchString === null) {
 			//Topical Search
 			const fieldNames = [
 				'entityname1',
@@ -71,7 +71,29 @@ export const actions: Actions = {
 					)
 					.orderBy(asc(records.year))
 					.limit(2500);
-				return { results: await entries };
+				const rawResults = await entries;
+
+				// the aggregated content will be changed like so:
+				// only take 40 characters before and after the exact match
+				// if the match is at the beginning or end of the string, only take 40 characters after or before the match
+				// <mark> tags are added to the exact match
+				const results = rawResults.map((result) => {
+					const content = result.aggregatedcontent;
+					if (!content) {
+						return result;
+					}
+					const matchIndex = content.toLowerCase().indexOf(searchString.toLowerCase());
+					const start = Math.max(0, matchIndex - 40);
+					const end = Math.min(content.length, matchIndex + searchString.length + 40);
+					const before = start === 0 ? '' : '...';
+					const after = end === content.length ? '' : '...';
+					const match = content
+						.slice(start, end)
+						.replace(searchString, `<mark>${searchString}</mark>`);
+					return { ...result, aggregatedcontent: `${before}${match}${after}` };
+				});
+
+				return { results };
 			} catch (e: any) {
 				return fail(500, { error: e.message, searchString });
 			}

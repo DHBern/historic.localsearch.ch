@@ -1,24 +1,21 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
-	import type { ModalProps } from 'svelte-modals';
 	import cross from '$lib/img/icon-cross-negative.svg';
 
-	const props = $props();
-	const { type } = props as ModalProps<'about' | 'help'>;
-	const { close, isOpen } = props;
+	let props = $props();
 </script>
 
-{#if isOpen}
-	<button class="close" aria-label="Close" onclick={() => close()}>
+{#if props.isOpen}
+	<button class="close" aria-label="Close" onclick={() => props.close()}>
 		<img src={cross} alt="close" />
 	</button>
 	<div role="dialog" class="modal">
 		<div class="prose contents">
-			<h2>{type === 'about' ? m.cool_game_whale_spark() : m.teal_sour_berry_pick()}</h2>
+			<h2>{props.type === 'about' ? m.cool_game_whale_spark() : m.teal_sour_berry_pick()}</h2>
 
-			{@html type === 'about' ? m.clean_bright_fox_file() : m.cuddly_awful_turtle_attend()}
+			{@html props.type === 'about' ? m.clean_bright_fox_file() : m.cuddly_awful_turtle_attend()}
 			<div class="actions">
-				<button onclick={() => close()}>OK</button>
+				<button onclick={() => props.close()}>OK</button>
 			</div>
 		</div>
 	</div>

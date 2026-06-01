@@ -16,8 +16,8 @@
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.1",
-		"@inlang/paraglide-js": "2.0.5",
-		"@sveltejs/adapter-vercel": "^5.10.3",
+		"@inlang/paraglide-js": "2.18.1",
+		"@sveltejs/adapter-vercel": "^6.3.3",
 		"@sveltejs/kit": "^2.61.1",
 		"@sveltejs/vite-plugin-svelte": "^5.1.1",
 		"autoprefixer": "^10.5.0",

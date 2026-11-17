@@ -37,11 +37,13 @@ export const actions: Actions = {
 			if (filters.length === 0) {
 				return fail(400, { error: 'No search criteria provided' });
 			}
+			// fields are only segmented up to 1937 (1938–1950 is unsegmented text)
+			const topicalTo = Math.min(to, 1937);
 			try {
 				const entries = db
 					.select()
 					.from(records)
-					.where(and(...filters, between(records.year, from, to)))
+					.where(and(...filters, between(records.year, from, topicalTo)))
 					.orderBy(asc(records.year))
 					.limit(2500);
 				return { results: await entries };

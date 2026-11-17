@@ -1,5 +1,5 @@
 import type { Actions } from './$types';
-import { db } from '$lib/server/db';
+import { getDb } from '$lib/server/db';
 import { records } from '$lib/server/db/schema';
 import { and, between, SQL, asc, or, ilike } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
@@ -40,7 +40,7 @@ export const actions: Actions = {
 			// fields are only segmented up to 1937 (1938–1950 is unsegmented text)
 			const topicalTo = Math.min(to, 1937);
 			try {
-				const entries = db
+				const entries = getDb()
 					.select()
 					.from(records)
 					.where(and(...filters, between(records.year, from, topicalTo)))
@@ -54,7 +54,7 @@ export const actions: Actions = {
 			//Full Text Search
 			try {
 				const parsedSearchString = `%${stringSchema.parse(searchString)}%`;
-				const entries = db
+				const entries = getDb()
 					.select()
 					.from(records)
 					.where(

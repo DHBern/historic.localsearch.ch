@@ -1,6 +1,6 @@
 import type { Actions } from './$types';
-import { db } from '$lib/server/db';
-import { records } from '$lib/server/db/schema';
+import { getDb } from '#lib/server/db/index.ts';
+import { records } from '#lib/server/db/schema.ts';
 import { and, between, SQL, asc, or, ilike } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -37,11 +37,13 @@ export const actions: Actions = {
 			if (filters.length === 0) {
 				return fail(400, { error: 'No search criteria provided' });
 			}
+			// fields are only segmented up to 1937 (1938–1950 is unsegmented text)
+			const topicalTo = Math.min(to, 1937);
 			try {
-				const entries = db
+				const entries = getDb()
 					.select()
 					.from(records)
-					.where(and(...filters, between(records.year, from, to)))
+					.where(and(...filters, between(records.year, from, topicalTo)))
 					.orderBy(asc(records.year))
 					.limit(2500);
 				return { results: await entries };
@@ -52,7 +54,7 @@ export const actions: Actions = {
 			//Full Text Search
 			try {
 				const parsedSearchString = `%${stringSchema.parse(searchString)}%`;
-				const entries = db
+				const entries = getDb()
 					.select()
 					.from(records)
 					.where(

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages.js';
+	import * as m from '#lib/paraglide/messages.js';
 	import { enhance } from '$app/forms';
-	import typewriter from '$lib/typewriter';
+	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
 	import { nonpassive } from 'svelte/legacy';
@@ -41,15 +41,13 @@
 		if (textfields?.searchstring) {
 			textfields.searchstring.value = '';
 		}
-		if (from < 1911) {
-			fromToFields[0] = '1911';
-		} else if (from > 1937) {
-			fromToFields[0] = '1937';
+		// entries are split into fields (name, street, …) only up to 1937;
+		// 1938–1950 exist as unsegmented text, so cap the range there
+		if (!(from <= TOPICAL_LAST)) {
+			fromToFields[0] = String(TOPICAL_FIRST);
 		}
-		if (to < 1911) {
-			fromToFields[1] = '1911';
-		} else if (to > 1937) {
-			fromToFields[1] = '1937';
+		if (!(to <= TOPICAL_LAST)) {
+			fromToFields[1] = String(TOPICAL_LAST);
 		}
 	};
 	const resetTopical = (event: Event) => {
@@ -60,7 +58,9 @@
 		});
 	};
 	const textfields = $state<Record<string, HTMLInputElement | undefined>>({});
-	const fromToFields = $state<string[]>([]);
+	const TOPICAL_FIRST = 1880;
+	const TOPICAL_LAST = 1937;
+	const fromToFields = $state<string[]>(['1880', '1950']);
 	const from = $derived(Number(fromToFields[0]));
 	const to = $derived(Number(fromToFields[1]));
 	let loading = $state(false);
@@ -148,7 +148,7 @@
 			{m.ochre_salty_ocean_spray()}
 		{/if}
 	</button>
-	{#if to <= 1937 && from >= 1911}
+	{#if !(from > TOPICAL_LAST)}
 		<div class="box mx-auto flex w-full flex-col items-center px-4 pb-10 sm:w-fit md:px-16">
 			<div class="w-[300px] md:w-[370px]">
 				<h2>{m.garnet_red_gem_glow()}</h2>

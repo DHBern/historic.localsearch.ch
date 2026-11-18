@@ -1,6 +1,6 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages.js';
-	import cross from '$lib/img/icon-cross-negative.svg';
+	import * as m from '#lib/paraglide/messages.js';
+	import cross from '#lib/img/icon-cross-negative.svg';
 
 	let props = $props();
 </script>

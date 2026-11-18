@@ -1,7 +1,7 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages.js';
-	import mag from '$lib/img/icon-search.svg';
-	import arrowRight from '$lib/img/icon-arrow-right.svg';
+	import * as m from '#lib/paraglide/messages.js';
+	import mag from '#lib/img/icon-search.svg';
+	import arrowRight from '#lib/img/icon-arrow-right.svg';
 </script>
 
 <div

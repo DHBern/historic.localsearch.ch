@@ -57,13 +57,13 @@ body {
 	line-height: 1.5rem;
 	text-align: left;
 	&:has([data-splash='1']) {
-		background-image: url('$lib/img/splash1.jpg');
+		background-image: url('./lib/img/splash1.jpg');
 	}
 	&:has([data-splash='2']) {
-		background-image: url('$lib/img/splash2.jpg');
+		background-image: url('./lib/img/splash2.jpg');
 	}
 	&:has([data-splash='3']) {
-		background-image: url('$lib/img/splash3.jpg');
+		background-image: url('./lib/img/splash3.jpg');
 	}
 	&:has([data-bg-color='white']) {
 		--primary: #000;

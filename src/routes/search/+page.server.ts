@@ -1,6 +1,6 @@
 import type { Actions } from './$types';
-import { getDb } from '$lib/server/db';
-import { records } from '$lib/server/db/schema';
+import { getDb } from '#lib/server/db/index.ts';
+import { records } from '#lib/server/db/schema.ts';
 import { and, between, SQL, asc, or, ilike } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';

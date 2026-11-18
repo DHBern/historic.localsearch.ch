@@ -3,9 +3,9 @@
 	let { children } = $props();
 	import Header from './Header.svelte';
 	import { Modals } from 'svelte-modals';
-	import ptt from '$lib/img/logo_pttarchiv_negative.svg';
-	import unibe from '$lib/img/logo_unibern_negative.svg';
-	import localsearch from '$lib/img/logo_localsearch_negative.svg';
+	import ptt from '#lib/img/logo_pttarchiv_negative.svg';
+	import unibe from '#lib/img/logo_unibern_negative.svg';
+	import localsearch from '#lib/img/logo_localsearch_negative.svg';
 </script>
 
 <div class="flex h-screen flex-col overflow-y-auto">

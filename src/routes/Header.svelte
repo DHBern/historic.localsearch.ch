@@ -1,8 +1,8 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages.js';
-	import { getLocale, locales, setLocale, localizeHref } from '$lib/paraglide/runtime.js';
+	import * as m from '#lib/paraglide/messages.js';
+	import { getLocale, locales, setLocale, localizeHref } from '#lib/paraglide/runtime.js';
 	import { modals } from 'svelte-modals';
-	import ModalDialog from '$lib/ModalDialog.svelte';
+	import ModalDialog from '#lib/ModalDialog.svelte';
 	function handleClick(type: 'about' | 'help') {
 		modals.open(ModalDialog, { type });
 	}

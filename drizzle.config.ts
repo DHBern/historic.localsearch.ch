@@ -6,7 +6,7 @@ if (
 	!process.env.DATABASE_PASSWORD ||
 	!process.env.DATABASE_NAME
 )
-	throw new Error('DATABASE_URL is not set');
+	throw new Error('DATABASE_HOST, DATABASE_PORT, DATABASE_USER, DATABASE_PASSWORD and DATABASE_NAME must be set');
 
 export default defineConfig({
 	schema: './src/lib/server/db/schema.ts',

@@ -6,6 +6,9 @@
 	import ptt from '#lib/img/logo_pttarchiv_negative.svg';
 	import unibe from '#lib/img/logo_unibern_negative.svg';
 	import localsearch from '#lib/img/logo_localsearch_negative.svg';
+	import { useAnalytics } from '#lib/analytics.ts';
+
+	useAnalytics();
 </script>
 
 <div class="flex h-screen flex-col overflow-y-auto">

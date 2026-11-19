@@ -1,4 +1,7 @@
-export default function typewriter(node: any, { delay = 0, speed = 50 }: any) {
+export default function typewriter(
+	node: Node,
+	{ delay = 0, speed = 50 }: { delay?: number; speed?: number }
+) {
 	const textNodes = getAllTextNodes(node);
 	if (!textNodes.length) {
 		throw new Error(`This transition only works on elements with text nodes`);
@@ -6,9 +9,9 @@ export default function typewriter(node: any, { delay = 0, speed = 50 }: any) {
 
 	let totalLength = 0;
 	const ranges = textNodes.map((textNode) => {
-		const range = [totalLength, totalLength + textNode.textContent.length];
-		totalLength += textNode.textContent.length;
-		const text = textNode.textContent;
+		const text = textNode.textContent ?? '';
+		const range = [totalLength, totalLength + text.length];
+		totalLength += text.length;
 		textNode.textContent = '';
 		return { textNode, range, text };
 	});
@@ -37,15 +40,13 @@ export default function typewriter(node: any, { delay = 0, speed = 50 }: any) {
 	};
 }
 
-function getAllTextNodes(node: { nodeType: number; hasChildNodes: () => any; childNodes: any }) {
+function getAllTextNodes(node: Node): Node[] {
 	if (node.nodeType === 3) {
 		return [node];
-	} else if (node.hasChildNodes()) {
-		let list: any[] = [];
-		for (let child of node.childNodes) {
-			getAllTextNodes(child).forEach((textNode) => list.push(textNode));
-		}
-		return list;
 	}
-	return [];
+	const list: Node[] = [];
+	for (const child of node.childNodes) {
+		list.push(...getAllTextNodes(child));
+	}
+	return list;
 }

@@ -10,17 +10,23 @@
 
 <header class="flex flex-wrap items-center justify-center gap-4 p-7 md:justify-between">
 	<h1 class="header-content">
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- localizeHref builds the path -->
 		<a href={localizeHref('/')}>historic.localsearch</a>
 	</h1>
 	<nav class="flex gap-4 md:gap-8">
 		<button
 			class="h-10 rounded-full border border-current px-4"
-			onclick={() => handleClick('about')}>{m.blue_short_bird_fly()}</button
+			onclick={() => handleClick('about')}
 		>
-		<button class="h-10 rounded-full border border-current px-4" onclick={() => handleClick('help')}
-			>{m.teal_sour_berry_pick()}</button
+			{m.blue_short_bird_fly()}
+		</button>
+		<button
+			class="h-10 rounded-full border border-current px-4"
+			onclick={() => handleClick('help')}
 		>
-		{#each locales as locale}
+			{m.teal_sour_berry_pick()}
+		</button>
+		{#each locales as locale (locale)}
 			{@const currentLocale = getLocale()}
 			{#if currentLocale !== locale}
 				<button

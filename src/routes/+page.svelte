@@ -11,7 +11,7 @@
 	<h2 data-splash={Math.round(Math.random() * (3 - 1) + 1)} class="text-2xl">
 		{m.khaki_wet_mud_squish()}
 	</h2>
-	<form method="POST" action={'search?/search'} class="form mx-auto mt-4 px-4">
+	<form method="POST" action="search?/search" class="form mx-auto mt-4 px-4">
 		<img src={mag} alt="search" class="mr-4 h-4 w-4" />
 		<input name="searchstring" type="text" maxlength="60" class="p-[2px]" />
 		<button type="submit" aria-label="search">

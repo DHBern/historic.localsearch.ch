@@ -7,9 +7,15 @@
 	import unibe from '#lib/img/logo_unibern_negative.svg';
 	import localsearch from '#lib/img/logo_localsearch_negative.svg';
 	import { useAnalytics } from '#lib/analytics.ts';
+	import * as m from '#lib/paraglide/messages.js';
 
 	useAnalytics();
 </script>
+
+<svelte:head>
+	<title>historic.localsearch – {m.beryl_hard_iron_forge()}</title>
+	<meta name="description" content={m.khaki_wet_mud_squish()} />
+</svelte:head>
 
 <div class="flex h-screen flex-col overflow-y-auto">
 	<Header />

@@ -4,6 +4,8 @@
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
+	import { formatNumber } from '#lib/search.ts';
+	import { tick } from 'svelte';
 
 	let { form }: { data: PageData; form: ActionData } = $props();
 	let showresults = $state(20);
@@ -63,7 +65,33 @@
 	const from = $derived(Number(fromToFields[0]));
 	const to = $derived(Number(fromToFields[1]));
 	let loading = $state(false);
+
+	const STEP = 20;
+	const loaded = $derived(form?.results?.length ?? 0);
+	// the server returns at most 2,500 entries; `total` is the number of all hits (null: unknown)
+	const total = $derived(form?.total === undefined ? loaded : form.total);
+	const truncated = $derived(total === null || total > loaded);
+	const lastYear = $derived(form?.results?.at(-1)?.year);
+	const errorText = $derived.by(() => {
+		switch (form?.error) {
+			case undefined:
+				return undefined;
+			case 'too_short':
+				return m.search_too_short();
+			case 'no_criteria':
+				return m.scarlet_warm_breeze_blow();
+			case 'invalid_years':
+				return m.magenta_foggy_mist_cover();
+			default:
+				return m.search_failed();
+		}
+	});
+	let status = $state<HTMLElement>();
 </script>
+
+<svelte:head>
+	<title>{m.page_title_search()} – historic.localsearch</title>
+</svelte:head>
 
 <form
 	method="POST"
@@ -82,7 +110,11 @@
 			// `result` is an `ActionResult` object
 			// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
 			await update({ reset: false });
+			showresults = STEP;
 			loading = false;
+			// the forms fill the screen: bring the answer into view
+			await tick();
+			status?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		};
 	}}
 >
@@ -225,6 +257,27 @@
 	{/if}
 </form>
 
+<div class="container mx-auto scroll-mt-4" bind:this={status} aria-live="polite">
+	{#if errorText}
+		<p class="status" role="alert" data-testid="error">{errorText}</p>
+	{:else if form?.results}
+		{#if loaded === 0}
+			<p class="status" data-testid="no-hits">{m.amethyst_shiny_crystal_sparkle()}</p>
+		{:else}
+			<p class="status font-bold" data-testid="hit-count">
+				{total === null
+					? m.search_hits_more({ count: formatNumber(loaded) })
+					: m.search_hits({ count: formatNumber(total) })}
+			</p>
+			{#if truncated}
+				<p class="status" data-testid="truncated">
+					{m.search_truncated({ shown: formatNumber(loaded), year: String(lastYear) })}
+				</p>
+			{/if}
+		{/if}
+	{/if}
+</div>
+
 {#if Object.keys(visibleResults).length > 0}
 	<div class="container mx-auto">
 		{#each Object.keys(visibleResults) as year (year)}
@@ -304,7 +357,7 @@
 								<div>
 									<dt>{m.periwinkle_bitter_tea_brew()}</dt>
 									<dd>
-										<!-- eslint-disable-next-line svelte/no-at-html-tags -- see #10 -->
+										<!-- eslint-disable-next-line svelte/no-at-html-tags -- escaped on the server (excerpt) -->
 										{@html result?.aggregatedcontent}
 									</dd>
 								</div>
@@ -314,19 +367,24 @@
 				</div>
 			{/each}
 		{/each}
-		<div class="flex justify-center">
-			<button
-				class="h-10 rounded-full border border-current px-4"
-				data-testid="more"
-				onclick={() => (showresults += 20)}
-			>
-				{m.cobalt_foggy_forest_whisper()}
-			</button>
-		</div>
+		{#if showresults < loaded}
+			<div class="flex justify-center">
+				<button
+					class="h-10 rounded-full border border-current px-4"
+					data-testid="more"
+					onclick={() => (showresults += STEP)}
+				>
+					{m.cobalt_foggy_forest_whisper()} ({formatNumber(showresults)}/{formatNumber(loaded)})
+				</button>
+			</div>
+		{/if}
 	</div>
 {/if}
 
 <style lang="postcss">
+	.status {
+		@apply px-4 py-2;
+	}
 	.box {
 		box-shadow: 10px 10px 5px #aaa;
 		background-color: #fdfd03;

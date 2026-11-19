@@ -4,7 +4,7 @@
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
-	import { formatNumber } from '#lib/search.ts';
+	import { formatNumber, scanId } from '#lib/search.ts';
 	import { tick } from 'svelte';
 
 	let { form }: { data: PageData; form: ActionData } = $props();
@@ -283,22 +283,30 @@
 		{#each Object.keys(visibleResults) as year (year)}
 			<h2 class="text-4xl" data-testid="year">{year}</h2>
 			{#each visibleResults[Number(year)] as result, i (i)}
-				{@const pageLink = `https://iiif.ptt-archiv.ch/iiif/3/${result.file?.replaceAll(
-					'\u{0065}\u{0300}',
-					'\u{00e8}'
-				)}_${String(result.page).padStart(4, '0')}.jp2/full/max/0/default.jpg`}
+				{@const scan = scanId(result.file, result.page)}
+				{@const pageLink = `https://iiif.ptt-archiv.ch/iiif/3/${scan}/full/max/0/default.jpg`}
 				<div class="flex min-h-24 gap-4 border-t-2 pb-4" data-testid="entry">
-					<a
-						class="flex-shrink-0"
-						href={pageLink}
-						target="_blank"
-						aria-label={m.topaz_hard_clay_mold()}
-					>
-						<img
-							src="/img/page{String(Math.round(Math.random() * (16 - 1) + 1)).padStart(2, '0')}.jpg"
-							alt={m.topaz_hard_clay_mold()}
-						/>
-					</a>
+					{#if scan}
+						<a
+							class="thumbnail flex-shrink-0"
+							href={pageLink}
+							target="_blank"
+							aria-label={m.topaz_hard_clay_mold()}
+						>
+							<img
+								src="https://iiif.ptt-archiv.ch/iiif/3/{scan}/full/64,/0/default.jpg"
+								srcset="https://iiif.ptt-archiv.ch/iiif/3/{scan}/full/128,/0/default.jpg 2x"
+								width="64"
+								height="96"
+								loading="lazy"
+								decoding="async"
+								alt={m.topaz_hard_clay_mold()}
+								data-testid="thumbnail"
+							/>
+						</a>
+					{:else}
+						<div class="thumbnail flex-shrink-0" aria-hidden="true"></div>
+					{/if}
 					<div>
 						{#if result.entityname1}
 							<p>
@@ -339,7 +347,7 @@
 									</dd>
 								</div>
 							{/if}
-							{#if result.page}
+							{#if result.page && scan}
 								<div>
 									<dt>{m.topaz_hard_clay_mold()}</dt>
 									<dd>
@@ -438,5 +446,17 @@
 	}
 	a:has(img) {
 		border-bottom: none;
+	}
+	/* the scan of the page; the grey box holds its place while it loads, or when an entry has no page */
+	.thumbnail {
+		width: 64px;
+		height: 96px;
+		background: #e5e5e5;
+	}
+	.thumbnail img {
+		width: 64px;
+		height: 96px;
+		object-fit: cover;
+		object-position: top;
 	}
 </style>

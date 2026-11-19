@@ -57,3 +57,17 @@ export function excerpt(content: string, term?: string | null): string {
 	html += escapeHtml(slice.slice(position));
 	return (start > 0 ? '...' : '') + html + (end < content.length ? '...' : '');
 }
+
+/**
+ * Name of the scan of a page on the archive's image server (iiif.ptt-archiv.ch), ready for an address.
+ *
+ * The server names its files with composed accents ("Genève"), so the volume
+ * name is composed first. Null when the entry has no volume or no page.
+ */
+export function scanId(
+	file: string | null | undefined,
+	page: number | null | undefined
+): string | null {
+	if (!file || page === null || page === undefined) return null;
+	return encodeURIComponent(`${file.normalize('NFC')}_${String(page).padStart(4, '0')}`) + '.jp2';
+}

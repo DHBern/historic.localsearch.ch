@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml, escapeLike, excerpt, formatNumber } from '../../src/lib/search.ts';
+import { escapeHtml, escapeLike, excerpt, formatNumber, scanId } from '../../src/lib/search.ts';
 
 describe('escapeLike', () => {
 	it('makes the LIKE wildcards literal (#13)', () => {
@@ -49,5 +49,19 @@ describe('formatNumber', () => {
 describe('escapeHtml', () => {
 	it('escapes the characters that end text or attributes', () => {
 		expect(escapeHtml(`<a href="x">&`)).toBe('&lt;a href=&quot;x&quot;&gt;&amp;');
+	});
+});
+
+describe('scanId', () => {
+	it('names the scan of a page (#24)', () => {
+		expect(scanId('P-260-1_2_1930', 72)).toBe('P-260-1_2_1930_0072.jp2');
+	});
+	it('composes a decomposed accent, as the image server names its files', () => {
+		expect(scanId('P-260-1_Gene\u0300ve_1902', 10)).toBe('P-260-1_Gen%C3%A8ve_1902_0010.jp2');
+		expect(scanId('P-260-1_Gen\u00e8ve_1902', 10)).toBe('P-260-1_Gen%C3%A8ve_1902_0010.jp2');
+	});
+	it('is null without a volume or a page', () => {
+		expect(scanId(null, 3)).toBeNull();
+		expect(scanId('P-260-1_2a_1920', null)).toBeNull();
 	});
 });

@@ -15,11 +15,16 @@
 	<nav class="flex gap-4 md:gap-8">
 		<button
 			class="h-10 rounded-full border border-current px-4"
-			onclick={() => handleClick('about')}>{m.blue_short_bird_fly()}</button
+			onclick={() => handleClick('about')}
 		>
-		<button class="h-10 rounded-full border border-current px-4" onclick={() => handleClick('help')}
-			>{m.teal_sour_berry_pick()}</button
+			{m.blue_short_bird_fly()}
+		</button>
+		<button
+			class="h-10 rounded-full border border-current px-4"
+			onclick={() => handleClick('help')}
 		>
+			{m.teal_sour_berry_pick()}
+		</button>
 		{#each locales as locale}
 			{@const currentLocale = getLocale()}
 			{#if currentLocale !== locale}

@@ -278,8 +278,10 @@
 											href="https://mfk.rechercheonline.ch/de/research/records/pttarchiv:{(
 												pdfIds as Record<string, number>
 											)[result.file]}"
-											target="_blank">{result.file}</a
+											target="_blank"
 										>
+											{result.file}
+										</a>
 									</dd>
 								</div>
 							{/if}
@@ -311,8 +313,10 @@
 		<div class="flex justify-center">
 			<button
 				class="h-10 rounded-full border border-current px-4"
-				onclick={() => (showresults += 20)}>{m.cobalt_foggy_forest_whisper()}</button
+				onclick={() => (showresults += 20)}
 			>
+				{m.cobalt_foggy_forest_whisper()}
+			</button>
 		</div>
 	</div>
 {/if}

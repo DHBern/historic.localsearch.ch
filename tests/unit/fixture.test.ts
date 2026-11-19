@@ -1,0 +1,43 @@
+import { afterAll, describe, expect, it } from 'vitest';
+import postgres from 'postgres';
+import { testDatabaseEnv } from '../env.ts';
+
+// Checks the test database itself: if these fail, the fixture is not loaded
+// (run `pnpm test:db`) and every other failure is noise.
+const env = testDatabaseEnv();
+const sql = postgres({
+	host: env.DATABASE_HOST,
+	port: Number(env.DATABASE_PORT),
+	database: env.DATABASE_NAME,
+	user: env.DATABASE_USER,
+	pass: env.DATABASE_PASSWORD
+});
+afterAll(() => sql.end());
+
+describe('fixture database', () => {
+	it('holds the fixture rows', async () => {
+		const [{ n }] = await sql`select count(*)::int n from records`;
+		expect(n).toBe(3632);
+	});
+
+	it('has the trigram extension the search needs', async () => {
+		const rows = await sql`select 1 from pg_extension where extname = 'pg_trgm'`;
+		expect(rows).toHaveLength(1);
+	});
+
+	it('has more "Hodel" hits than the 2,500 rows a search used to return', async () => {
+		const [{ n }] = await sql`
+			select count(*)::int n from records
+			where entityname1 ilike '%Hodel%' or aggregatedcontent ilike '%Hodel%'`;
+		expect(n).toBe(3092);
+	});
+
+	it('covers fields (up to 1937) and text fragments (from 1938)', async () => {
+		const [{ fields, fragments }] = await sql`
+			select count(*) filter (where year <= 1937 and entityname1 is not null)::int fields,
+			       count(*) filter (where year >= 1938 and entityname1 is null)::int fragments
+			from records`;
+		expect(fields).toBeGreaterThan(1000);
+		expect(fragments).toBeGreaterThan(1000);
+	});
+});

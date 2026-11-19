@@ -4,7 +4,6 @@
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
-	import { nonpassive } from 'svelte/legacy';
 
 	let { form }: { data: PageData; form: ActionData } = $props();
 	let showresults = $state(20);
@@ -37,7 +36,7 @@
 		});
 		return sorted;
 	});
-	const resetFullText = (event: Event) => {
+	const resetFullText = () => {
 		if (textfields?.searchstring) {
 			textfields.searchstring.value = '';
 		}
@@ -50,7 +49,7 @@
 			fromToFields[1] = String(TOPICAL_LAST);
 		}
 	};
-	const resetTopical = (event: Event) => {
+	const resetTopical = () => {
 		Object.values(textfields).forEach((field) => {
 			if (field && field.name !== 'searchstring') {
 				field.value = '';
@@ -71,7 +70,7 @@
 	class="container mx-auto flex flex-col justify-center"
 	action="?/search"
 	data-bg-color="white"
-	use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+	use:enhance={() => {
 		// `formElement` is this `<form>` element
 		// `formData` is its `FormData` object that's about to be submitted
 		// `action` is the URL to which the form is posted
@@ -79,7 +78,7 @@
 		// `submitter` is the `HTMLElement` that caused the form to be submitted
 		loading = true;
 
-		return async ({ result, update }) => {
+		return async ({ update }) => {
 			// `result` is an `ActionResult` object
 			// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
 			await update({ reset: false });
@@ -142,6 +141,7 @@
 	>
 		{#if loading}
 			<span in:typewriter={{ speed: 80 }}>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own message text -->
 				{@html m.chartreuse_cool_wind_whisper()}
 			</span>
 		{:else}
@@ -215,6 +215,7 @@
 		>
 			{#if loading}
 				<span in:typewriter={{ speed: 80 }}>
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own message text -->
 					{@html m.chartreuse_cool_wind_whisper()}
 				</span>
 			{:else}
@@ -226,14 +227,14 @@
 
 {#if Object.keys(visibleResults).length > 0}
 	<div class="container mx-auto">
-		{#each Object.keys(visibleResults) as year}
-			<h2 class="text-4xl">{year}</h2>
-			{#each visibleResults[Number(year)] as result}
+		{#each Object.keys(visibleResults) as year (year)}
+			<h2 class="text-4xl" data-testid="year">{year}</h2>
+			{#each visibleResults[Number(year)] as result, i (i)}
 				{@const pageLink = `https://iiif.ptt-archiv.ch/iiif/3/${result.file?.replaceAll(
 					'\u{0065}\u{0300}',
 					'\u{00e8}'
 				)}_${String(result.page).padStart(4, '0')}.jp2/full/max/0/default.jpg`}
-				<div class="flex min-h-24 gap-4 border-t-2 pb-4">
+				<div class="flex min-h-24 gap-4 border-t-2 pb-4" data-testid="entry">
 					<a
 						class="flex-shrink-0"
 						href={pageLink}
@@ -302,7 +303,10 @@
 							{#if result.aggregatedcontent}
 								<div>
 									<dt>{m.periwinkle_bitter_tea_brew()}</dt>
-									<dd>{@html result?.aggregatedcontent}</dd>
+									<dd>
+										<!-- eslint-disable-next-line svelte/no-at-html-tags -- see #10 -->
+										{@html result?.aggregatedcontent}
+									</dd>
 								</div>
 							{/if}
 						</dl>
@@ -313,6 +317,7 @@
 		<div class="flex justify-center">
 			<button
 				class="h-10 rounded-full border border-current px-4"
+				data-testid="more"
 				onclick={() => (showresults += 20)}
 			>
 				{m.cobalt_foggy_forest_whisper()}

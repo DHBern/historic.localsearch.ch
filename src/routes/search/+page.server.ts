@@ -27,7 +27,7 @@ export const actions: Actions = {
 				'locality',
 				'phonenumber'
 			] as const;
-			let filters: SQL[] = [];
+			const filters: SQL[] = [];
 			fieldNames.forEach((fieldName) => {
 				const parsed = stringSchema.safeParse(formData.get(fieldName));
 				if (parsed.success) {
@@ -47,8 +47,8 @@ export const actions: Actions = {
 					.orderBy(asc(records.year))
 					.limit(2500);
 				return { results: await entries };
-			} catch (e: any) {
-				return fail(500, { error: e.message, searchString });
+			} catch (e) {
+				return fail(500, { error: e instanceof Error ? e.message : String(e), searchString });
 			}
 		} else {
 			//Full Text Search
@@ -96,8 +96,8 @@ export const actions: Actions = {
 				});
 
 				return { results };
-			} catch (e: any) {
-				return fail(500, { error: e.message, searchString });
+			} catch (e) {
+				return fail(500, { error: e instanceof Error ? e.message : String(e), searchString });
 			}
 		}
 	}

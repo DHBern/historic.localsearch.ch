@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Load the fixture into a PostgreSQL 15 database.
+# Connection comes from DATABASE_* (see .env.test), the same variables the app reads.
+set -euo pipefail
+cd "$(dirname "$0")"
+export PGHOST="${DATABASE_HOST:-127.0.0.1}" PGPORT="${DATABASE_PORT:-55433}"
+export PGDATABASE="${DATABASE_NAME:-phonebook_test}" PGUSER="${DATABASE_USER:-postgres}"
+export PGPASSWORD="${DATABASE_PASSWORD:-test}"
+psql -X -q -v ON_ERROR_STOP=1 -f schema.sql
+psql -X -q -v ON_ERROR_STOP=1 -c "\copy records from 'records.tsv'"
+psql -X -q -v ON_ERROR_STOP=1 -f indexes.sql
+psql -X -t -c "select count(*) || ' rows loaded' from records"

@@ -13,6 +13,7 @@
 		<div class="prose contents">
 			<h2>{props.type === 'about' ? m.cool_game_whale_spark() : m.teal_sour_berry_pick()}</h2>
 
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own message text -->
 			{@html props.type === 'about' ? m.clean_bright_fox_file() : m.cuddly_awful_turtle_attend()}
 			<div class="actions">
 				<button onclick={() => props.close()}>OK</button>

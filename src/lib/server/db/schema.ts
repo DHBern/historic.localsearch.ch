@@ -1,5 +1,4 @@
 import { pgTable, index, text, integer } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 
 export const records = pgTable(
 	'records',

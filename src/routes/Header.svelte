@@ -10,6 +10,7 @@
 
 <header class="flex flex-wrap items-center justify-center gap-4 p-7 md:justify-between">
 	<h1 class="header-content">
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- localizeHref builds the path -->
 		<a href={localizeHref('/')}>historic.localsearch</a>
 	</h1>
 	<nav class="flex gap-4 md:gap-8">
@@ -25,7 +26,7 @@
 		>
 			{m.teal_sour_berry_pick()}
 		</button>
-		{#each locales as locale}
+		{#each locales as locale (locale)}
 			{@const currentLocale = getLocale()}
 			{#if currentLocale !== locale}
 				<button

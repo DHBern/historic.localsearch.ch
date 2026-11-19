@@ -10,6 +10,10 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
+		"test:db": "docker compose -f compose.test.yaml up -d --wait && tests/fixtures/load.sh",
+		"test:unit": "vitest run",
+		"test:e2e": "playwright test",
+		"test": "vitest run && playwright test",
 		"db:push": "drizzle-kit push",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio"

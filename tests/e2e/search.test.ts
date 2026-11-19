@@ -121,3 +121,20 @@ test('pages have a title and a description (#15)', async ({ page, request }) => 
 	await expect(page).toHaveTitle('Suche – historic.localsearch');
 	expect((await request.get('/robots.txt')).status()).toBe(200);
 });
+
+test('each entry shows a small rendering of its own page (#24)', async ({ page }) => {
+	await page.goto('/search');
+	await page.locator('input[name=entityname1]').fill('Annoncenbureau');
+	await page.locator('input[name=entityname1]').press('Enter');
+	const first = page.locator('[data-testid=entry]').first();
+	const picture = first.locator('[data-testid=thumbnail]');
+	const scan = /^https:\/\/iiif\.ptt-archiv\.ch\/iiif\/3\/P-260-1_Zuerich_1880_\d{4}\.jp2\/full\//;
+	await expect(picture).toHaveAttribute('src', new RegExp(scan.source + '64,/0/default\\.jpg$'));
+	await expect(picture).toHaveAttribute('loading', 'lazy');
+	// the picture links to the full scan of the same page
+	const small = await picture.getAttribute('src');
+	await expect(first.locator('a.thumbnail')).toHaveAttribute(
+		'href',
+		small!.replace('/full/64,/', '/full/max/')
+	);
+});

@@ -9,4 +9,6 @@ export PGPASSWORD="${DATABASE_PASSWORD:-test}"
 psql -X -q -v ON_ERROR_STOP=1 -f schema.sql
 psql -X -q -v ON_ERROR_STOP=1 -c "\copy records from 'records.tsv'"
 psql -X -q -v ON_ERROR_STOP=1 -f indexes.sql
+# the per-volume summary, with the same script production uses
+psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS volumes" -f ../../db/volumes.sql >/dev/null
 psql -X -t -c "select count(*) || ' rows loaded' from records"

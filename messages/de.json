@@ -94,5 +94,21 @@
 	"coverage_missing_title": "Nicht in der Datenbank",
 	"coverage_missing_text": "Diese Bände sind im Archivkatalog verzeichnet, aber nicht durchsuchbar:",
 	"coverage_unavailable": "Die Übersicht ist zurzeit nicht verfügbar.",
-	"coverage_to_search": "Zur Suche"
+	"coverage_to_search": "Zur Suche",
+	"map_show": "Auf Karte zeigen",
+	"map_hide": "Karte schliessen",
+	"map_experimental": "Versuch",
+	"map_loading": "Karte wird geladen …",
+	"map_unavailable": "Für diese Suche lässt sich keine Karte erstellen. Grenzen Sie die Suche ein.",
+	"map_label": "Karte der Treffer nach heutiger Gemeinde",
+	"map_shown": "{shown} von {total} Treffern sind auf der Karte, in {places} heutigen Gemeinden.",
+	"map_no_locality": "{count} Treffer stammen aus Bänden ohne Ortsangabe je Eintrag.",
+	"map_unresolved": "{count} Treffer haben eine Ortsangabe, die sich nicht zuordnen liess.",
+	"map_note": "Die Karte ist ein Versuch. Orte sind maschinell zugeordnet und können falsch sein; ein Kreis steht für eine heutige Gemeinde. Nicht alle Bände sind vollständig:",
+	"map_tooltip": "{name} ({canton}): {count} Treffer",
+	"map_tooltip_uncertain": "{count} davon über ähnliche Schreibung zugeordnet",
+	"map_largest": "Gemeinden mit den meisten Treffern",
+	"map_only": "Nur {name}",
+	"map_only_remove": "Eingrenzung auf {name} aufheben",
+	"map_attribution": "Karte: Zeitreise, © swisstopo (Stand {year})"
 }

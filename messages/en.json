@@ -95,5 +95,21 @@
 	"coverage_missing_title": "Not in the database",
 	"coverage_missing_text": "These volumes are listed in the archive catalogue but cannot be searched:",
 	"coverage_unavailable": "The overview is not available at the moment.",
-	"coverage_to_search": "To the search"
+	"coverage_to_search": "To the search",
+	"map_show": "Show on map",
+	"map_hide": "Close map",
+	"map_experimental": "experimental",
+	"map_loading": "Loading the map …",
+	"map_unavailable": "No map can be made for this search. Narrow the search.",
+	"map_label": "Map of the hits by municipality of today",
+	"map_shown": "{shown} of {total} hits are on the map, in {places} municipalities of today.",
+	"map_no_locality": "{count} hits come from volumes without a place per entry.",
+	"map_unresolved": "{count} hits have a place that could not be located.",
+	"map_note": "The map is an experiment. Places are assigned by machine and can be wrong; a circle stands for a municipality of today. Not all volumes are complete:",
+	"map_tooltip": "{name} ({canton}): {count} hits",
+	"map_tooltip_uncertain": "{count} of them located by a similar spelling",
+	"map_largest": "Municipalities with the most hits",
+	"map_only": "Only {name}",
+	"map_only_remove": "Remove the limit to {name}",
+	"map_attribution": "Map: journey through time, © swisstopo (state of {year})"
 }

@@ -94,5 +94,21 @@
 	"coverage_missing_title": "Absents de la base de données",
 	"coverage_missing_text": "Ces volumes figurent au catalogue des archives mais ne peuvent pas être recherchés :",
 	"coverage_unavailable": "L’aperçu n’est pas disponible pour le moment.",
-	"coverage_to_search": "Vers la recherche"
+	"coverage_to_search": "Vers la recherche",
+	"map_show": "Afficher sur la carte",
+	"map_hide": "Fermer la carte",
+	"map_experimental": "essai",
+	"map_loading": "Chargement de la carte …",
+	"map_unavailable": "Aucune carte ne peut être établie pour cette recherche. Précisez la recherche.",
+	"map_label": "Carte des résultats par commune actuelle",
+	"map_shown": "{shown} résultats sur {total} figurent sur la carte, dans {places} communes actuelles.",
+	"map_no_locality": "{count} résultats proviennent de volumes sans lieu par inscription.",
+	"map_unresolved": "{count} résultats ont un lieu qui n’a pas pu être localisé.",
+	"map_note": "La carte est un essai. Les lieux sont attribués automatiquement et peuvent être erronés ; un cercle représente une commune actuelle. Tous les volumes ne sont pas complets :",
+	"map_tooltip": "{name} ({canton}) : {count} résultats",
+	"map_tooltip_uncertain": "dont {count} localisés par une graphie semblable",
+	"map_largest": "Communes avec le plus de résultats",
+	"map_only": "Seulement {name}",
+	"map_only_remove": "Lever la limite à {name}",
+	"map_attribution": "Carte : voyage dans le temps, © swisstopo (état {year})"
 }

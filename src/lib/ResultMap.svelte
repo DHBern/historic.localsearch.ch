@@ -137,7 +137,7 @@
 		draw();
 	});
 
-	// streets of the chosen town: small black dots, and the view goes to where they are
+	// streets of the chosen town: small red dots, and the view goes to where they are
 	function drawStreets() {
 		if (!leaflet || !map || !dots) return;
 		const L = leaflet;
@@ -146,11 +146,12 @@
 		const largest = Math.max(1, ...streets.map((street) => street.n));
 		for (const street of streets) {
 			const dot = L.circleMarker([street.lat, street.lon], {
-				radius: 3 + 9 * Math.sqrt(street.n / largest),
+				radius: 4 + 9 * Math.sqrt(street.n / largest),
+				// red with a white edge: the town maps are printed in black
 				color: '#fff',
-				weight: 1,
-				fillColor: '#000',
-				fillOpacity: 0.85
+				weight: 2,
+				fillColor: '#e4003a',
+				fillOpacity: 0.95
 			});
 			const tip = document.createElement('span');
 			tip.textContent = m.map_street_tooltip({ name: street.name, count: formatNumber(street.n) });

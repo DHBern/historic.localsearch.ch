@@ -17,7 +17,7 @@ afterAll(() => sql.end());
 describe('fixture database', () => {
 	it('holds the fixture rows', async () => {
 		const [{ n }] = await sql`select count(*)::int n from records`;
-		expect(n).toBe(3632);
+		expect(n).toBe(3638);
 	});
 
 	it('has the trigram extension the search needs', async () => {
@@ -32,7 +32,7 @@ describe('fixture database', () => {
 		expect(n).toBe(3092);
 	});
 
-	it('covers fields (up to 1937) and text fragments (from 1938)', async () => {
+	it('covers fields (up to 1937, and one volume of 1938) and text fragments (from 1938)', async () => {
 		const [{ fields, fragments }] = await sql`
 			select count(*) filter (where year <= 1937 and entityname1 is not null)::int fields,
 			       count(*) filter (where year >= 1938 and entityname1 is null)::int fragments

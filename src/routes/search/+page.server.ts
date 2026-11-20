@@ -17,8 +17,11 @@ const fieldNames = [
 	'supplement',
 	'street',
 	'locality',
-	'phonenumber'
+	'phonenumber',
+	'alliance'
 ] as const;
+// the kinds of entry the re-reading tells apart (#58); older volumes have none
+const kinds = ['person', 'firma', 'amt'] as const;
 
 const termSchema = z.string().min(MIN_LENGTH).max(MAX_LENGTH);
 const yearSchema = z.number().int().min(FIRST_YEAR).max(LAST_YEAR);
@@ -181,6 +184,16 @@ function criteria(formData: FormData, withPlace: boolean) {
 		if (filters.length === 0) {
 			return { error: 'no_criteria' as const };
 		}
+		// narrowing by kind works only where the kind is known: it leaves out the volumes not read again
+		const kind = text(formData.get('kind'));
+		if (kind !== '') {
+			if (!(kinds as readonly string[]).includes(kind)) return { error: 'invalid_kind' as const };
+			filters.push(eq(records.kind, kind));
+		}
+		// second lines of one subscriber (Wohnung, Bureau, Appart.) can be left out; entries without a kind stay
+		if (formData.get('nosub') === 'on') {
+			filters.push(sql`${records.kind} is distinct from 'zusatz'`);
+		}
 		// volumes that have not been split into fields have no values to match: they drop out by themselves
 		where = and(...filters, between(records.year, from, to));
 	} else {
@@ -190,7 +203,10 @@ function criteria(formData: FormData, withPlace: boolean) {
 		}
 		where = and(
 			or(
-				...fieldNames.map((fieldName) => contains(records[fieldName])(searchString)),
+				// not the alliance name: it is part of the entry text anyway ("(-Goerger)")
+				...fieldNames
+					.filter((fieldName) => fieldName !== 'alliance')
+					.map((fieldName) => contains(records[fieldName])(searchString)),
 				contains(records.aggregatedcontent)(searchString)
 			),
 			between(records.year, from, to)

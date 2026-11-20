@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openSearch } from './helpers.ts';
 
 // #36: the language in the address wins over the language cookie of an earlier visit.
 
@@ -34,6 +35,6 @@ test('a search sent from /en/… with a German cookie still returns entries', as
 
 test('an address without a language still follows the cookie', async ({ page, context }) => {
 	await context.addCookies([{ ...cookie, value: 'fr' }]);
-	await page.goto('/search');
+	await openSearch(page);
 	await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
 });

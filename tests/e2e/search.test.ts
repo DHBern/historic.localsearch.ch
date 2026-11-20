@@ -1,9 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openSearch } from './helpers.ts';
 
 // One test per defect of the bug-fix epic (#32), against the fixture database.
 
 async function fullText(page: Page, term: string) {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=searchstring]').fill(term);
 	await page.locator('input[name=searchstring]').press('Enter');
 }
@@ -19,7 +20,7 @@ test('states the number of hits, and says when the list is cut (#7)', async ({ p
 });
 
 test('a complete list has a count and no notice (#7)', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=from]').fill('1880');
 	await page.locator('input[name=to]').fill('1900');
 	await page.locator('input[name=entityname1]').fill('Hodel');
@@ -67,7 +68,7 @@ test('does not treat the search term as HTML (#10)', async ({ page }) => {
 });
 
 test('the button names what it adds and leaves when all is shown (#11)', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=to]').fill('1900');
 	await page.locator('input[name=entityname1]').fill('Hodel');
 	await page.locator('input[name=entityname1]').press('Enter');
@@ -103,7 +104,7 @@ test('% and _ are searched as characters (#13)', async ({ page }) => {
 });
 
 test('the help text does not describe an approximate search (#14)', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.getByRole('button', { name: 'Hilfe' }).click();
 	const help = page.getByRole('dialog');
 	await expect(help).toContainText('Weitere Einträge');
@@ -117,13 +118,13 @@ test('pages have a title and a description (#15)', async ({ page, request }) => 
 		'content',
 		'Suche in historischen Telefonbüchern von 1880 bis 1950'
 	);
-	await page.goto('/search');
+	await openSearch(page);
 	await expect(page).toHaveTitle('Suche – historic.localsearch');
 	expect((await request.get('/robots.txt')).status()).toBe(200);
 });
 
 test('each entry shows a small rendering of its own page (#24)', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=entityname1]').fill('Annoncenbureau');
 	await page.locator('input[name=entityname1]').press('Enter');
 	const first = page.locator('[data-testid=entry]').first();
@@ -142,7 +143,7 @@ test('each entry shows a small rendering of its own page (#24)', async ({ page }
 // Field search from 1938 on: only the volumes that have been read again have fields.
 
 test('a field search reaches the volumes of 1938–1950 that have fields', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=from]').fill('1938');
 	await page.locator('input[name=to]').fill('1950');
 	// the field form stays, and says which years it covers
@@ -155,9 +156,46 @@ test('a field search reaches the volumes of 1938–1950 that have fields', async
 });
 
 test('a field search over all years includes 1938', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=locality]').fill('Genève');
 	await page.locator('input[name=street]').fill('Rhône');
 	await page.locator('input[name=street]').press('Enter');
 	await expect(page.getByTestId('year').last()).toHaveText('1938');
+});
+
+// What the re-reading knows about an entry (#58): kind, title, wife's family name.
+
+async function fieldSearch(page: Page, fill: (page: Page) => Promise<void>) {
+	await openSearch(page);
+	await page.locator('input[name=from]').fill('1938');
+	await fill(page);
+	await page.locator('input[name=locality]').fill('Genève');
+	await page.locator('input[name=locality]').press('Enter');
+	await expect(page.getByTestId('hit-count')).toBeVisible();
+}
+
+test("an entry shows its kind, title and wife's family name", async ({ page }) => {
+	await fieldSearch(page, async (p) => p.locator('input[name=entityname1]').fill('Hoch'));
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 1');
+	await expect(page.getByTestId('alliance')).toContainText('Goerger');
+	await expect(page.getByTestId('kind-of-entry')).toContainText('Person');
+});
+
+test("the wife's family name can be searched", async ({ page }) => {
+	await fieldSearch(page, async (p) => p.locator('input[name=alliance]').fill('Zwahlen'));
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 1');
+	await expect(entries(page).first()).toContainText('Hofler');
+});
+
+test('the search can be limited to firms, and second lines can be left out', async ({ page }) => {
+	await fieldSearch(page, async (p) => p.getByTestId('kind').selectOption('firma'));
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 3');
+	for (const kind of await page.getByTestId('kind-of-entry').allInnerTexts()) {
+		expect(kind).toContain('Firma');
+	}
+	// all 19 entries of the volume, then without its one second line
+	await fieldSearch(page, async () => {});
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 19');
+	await fieldSearch(page, async (p) => p.locator('input[name=nosub]').check());
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 18');
 });

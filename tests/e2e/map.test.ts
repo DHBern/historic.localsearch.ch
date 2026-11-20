@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { openSearch } from './helpers.ts';
 
 // The counts per municipality behind the map (#44), against the fixture database.
 
@@ -54,7 +55,7 @@ test('refuses what the search refuses', async ({ request }) => {
 
 async function searchWithMap(page: Page, term: string) {
 	await page.route('https://wmts.geo.admin.ch/**', (route) => route.abort());
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=searchstring]').fill(term);
 	await page.locator('input[name=searchstring]').press('Enter');
 	await expect(page.getByTestId('hit-count')).toBeVisible();

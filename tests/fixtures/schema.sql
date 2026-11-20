@@ -13,5 +13,9 @@ CREATE TABLE records (
 	page integer,
 	file text,
 	network text,
-	aggregatedcontent text
+	aggregatedcontent text,
+	-- from the re-reading of 1938-1950 only (#58)
+	kind text,
+	title text,
+	alliance text
 );

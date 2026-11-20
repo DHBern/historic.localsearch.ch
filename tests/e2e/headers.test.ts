@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openSearch } from './helpers.ts';
 
 // #30: every page carries a Content-Security-Policy and the other security headers,
 // and the policy does not get in the way of the page itself.
@@ -24,7 +25,7 @@ test('the policy blocks nothing the pages need', async ({ page }) => {
 		if (/Content Security Policy/i.test(message.text())) blocked.push(message.text());
 	});
 	await page.goto('/');
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=searchstring]').fill('Hodel');
 	await page.locator('input[name=searchstring]').press('Enter');
 	await expect(page.getByTestId('thumbnail').first()).toBeVisible();

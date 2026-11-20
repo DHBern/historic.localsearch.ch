@@ -7,7 +7,7 @@
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
 	import { formatNumber, scanId } from '#lib/search.ts';
-	import { tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let showresults = $state(20);
@@ -20,6 +20,9 @@
 				file: string | null;
 				aggregatedcontent: string | null;
 				network: string | null;
+				kind: string | null;
+				title: string | null;
+				alliance: string | null;
 				entityname1: string | null;
 				entityname2: string | null;
 				locality: string | null;
@@ -90,6 +93,18 @@
 		}
 	});
 	let status = $state<HTMLElement>();
+	// set once the page reacts to input: before that a submit reloads the page (it still works, but tests wait for it)
+	let ready = $state(false);
+	onMount(() => {
+		ready = true;
+	});
+	const kindLabel = (kind: string) =>
+		({
+			person: m.kind_person(),
+			firma: m.kind_firma(),
+			amt: m.kind_amt(),
+			zusatz: m.kind_zusatz()
+		})[kind] ?? kind;
 
 	// the map of the hits (#45): asked for only when it is opened
 	type MapData = {
@@ -187,6 +202,7 @@
 	class="container mx-auto flex flex-col justify-center"
 	action="?/search"
 	data-bg-color="white"
+	data-ready={ready}
 	bind:this={formElement}
 	use:enhance={({ formData }) => {
 		// `formElement` is this `<form>` element
@@ -349,6 +365,32 @@
 			name="phonenumber"
 			placeholder={m.lavender_dim_shadow_hide()}
 		/>
+		<!-- what the re-reading of 1938–1950 knows about an entry (#58) -->
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.alliance}
+			maxlength="60"
+			name="alliance"
+			placeholder={m.field_alliance()}
+		/>
+		<div class="mt-4 w-[300px] md:w-[370px]">
+			<label>
+				<span>{m.field_kind()}</span>
+				<select name="kind" data-testid="kind">
+					<option value="">{m.kind_all()}</option>
+					<option value="person">{m.kind_person()}</option>
+					<option value="firma">{m.kind_firma()}</option>
+					<option value="amt">{m.kind_amt()}</option>
+				</select>
+			</label>
+			<label class="mt-2 block">
+				<input type="checkbox" name="nosub" />
+				{m.field_nosub()}
+			</label>
+			<p class="pt-2 text-sm">{m.field_new_note()}</p>
+		</div>
 	</div>
 	<button
 		class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
@@ -523,6 +565,24 @@
 							</p>
 						{/if}
 						<dl class="flex flex-wrap gap-2">
+							{#if result.kind}
+								<div data-testid="kind-of-entry">
+									<dt>{m.result_kind()}</dt>
+									<dd>{kindLabel(result.kind)}</dd>
+								</div>
+							{/if}
+							{#if result.title}
+								<div>
+									<dt>{m.result_title()}</dt>
+									<dd>{result.title}</dd>
+								</div>
+							{/if}
+							{#if result.alliance}
+								<div data-testid="alliance">
+									<dt>{m.result_alliance()}</dt>
+									<dd>{result.alliance}</dd>
+								</div>
+							{/if}
 							{#if result.network}
 								<div>
 									<dt>{m.sapphire_rough_metal_bend()}</dt>

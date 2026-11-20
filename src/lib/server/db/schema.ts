@@ -13,7 +13,11 @@ export const records = pgTable(
 		page: integer(),
 		file: text(),
 		network: text(),
-		aggregatedcontent: text()
+		aggregatedcontent: text(),
+		// from the re-reading of 1938–1950 only (#58): person / firma / amt / zusatz, title, wife's family name
+		kind: text(),
+		title: text(),
+		alliance: text()
 	},
 	(table) => {
 		return {

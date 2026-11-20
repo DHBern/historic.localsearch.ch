@@ -115,5 +115,17 @@
 	"map_street_tooltip": "{name}: {count} Treffer",
 	"map_street_source": "Strassen: amtliches Strassenverzeichnis, © swisstopo",
 	"search_fields_from_1938": "Von 1938 bis 1950 sind erst diese Jahre nach Feldern durchsuchbar: {years}. Die übrigen Jahre finden Sie nur über die Volltextsuche.",
-	"search_fields_partly": "teilweise"
+	"search_fields_partly": "teilweise",
+	"field_alliance": "Allianzname (Name der Ehefrau), ab 1938",
+	"field_kind": "Art des Eintrags",
+	"kind_all": "alle",
+	"kind_person": "Person",
+	"kind_firma": "Firma",
+	"kind_amt": "Amt",
+	"kind_zusatz": "Zweitzeile",
+	"field_nosub": "ohne Zweitzeilen (Wohnung, Bureau)",
+	"field_new_note": "Art, Titel und Allianzname sind erst in den neu gelesenen Bänden ab 1938 erfasst. Wer nach der Art filtert, sucht nur in diesen Bänden.",
+	"result_title": "Titel",
+	"result_alliance": "Allianzname",
+	"result_kind": "Art"
 }

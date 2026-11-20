@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openSearch } from './helpers.ts';
 
 // What must never break again: the page starts in the browser (buttons work)
 // and a search returns entries. The SvelteKit 3 upgrade broke both while
@@ -15,7 +16,7 @@ test('start page has the search field and no script errors', async ({ page }) =>
 });
 
 test('the help button opens the help text', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.getByRole('button', { name: 'Hilfe' }).click();
 	await expect(page.getByRole('dialog')).toContainText('Suchstrategien');
 	await page.getByRole('button', { name: 'OK' }).click();
@@ -31,7 +32,7 @@ test('a search from the start page shows entries', async ({ page }) => {
 });
 
 test('a full-text search works in place and lists entries by year', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=searchstring]').fill('Hodel');
 	await page.locator('input[name=searchstring]').press('Enter');
 	await expect(page.locator('[data-testid=entry]')).toHaveCount(20);
@@ -41,7 +42,7 @@ test('a full-text search works in place and lists entries by year', async ({ pag
 });
 
 test('the button under the list shows more entries', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=searchstring]').fill('Hodel');
 	await page.locator('input[name=searchstring]').press('Enter');
 	await expect(page.locator('[data-testid=entry]')).toHaveCount(20);
@@ -50,7 +51,7 @@ test('the button under the list shows more entries', async ({ page }) => {
 });
 
 test('a search by name finds the first phone book of 1880', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.locator('input[name=entityname1]').fill('Annoncenbureau');
 	await page.locator('input[name=entityname1]').press('Enter');
 	const first = page.locator('[data-testid=entry]').first();
@@ -62,14 +63,14 @@ test('a search by name finds the first phone book of 1880', async ({ page }) => 
 });
 
 test('the language switch changes the interface', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.getByRole('button', { name: 'en', exact: true }).click();
 	await expect(page).toHaveURL(/\/en\/search/);
 	await expect(page.getByRole('button', { name: 'Help' })).toBeVisible();
 });
 
 test('the about text says that the data are machine-generated', async ({ page }) => {
-	await page.goto('/search');
+	await openSearch(page);
 	await page.getByRole('button', { name: 'Über' }).click();
 	const dialog = page.getByRole('dialog');
 	await expect(dialog.getByRole('heading', { name: 'Maschinell erzeugte Daten' })).toBeVisible();

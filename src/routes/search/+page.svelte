@@ -9,7 +9,7 @@
 	import { formatNumber, scanId } from '#lib/search.ts';
 	import { tick } from 'svelte';
 
-	let { form }: { data: PageData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let showresults = $state(20);
 	let visibleResults = $derived.by(() => {
 		let sorted: Record<
@@ -44,14 +44,6 @@
 		if (textfields?.searchstring) {
 			textfields.searchstring.value = '';
 		}
-		// entries are split into fields (name, street, …) only up to 1937;
-		// 1938–1950 exist as unsegmented text, so cap the range there
-		if (!(from <= TOPICAL_LAST)) {
-			fromToFields[0] = String(TOPICAL_FIRST);
-		}
-		if (!(to <= TOPICAL_LAST)) {
-			fromToFields[1] = String(TOPICAL_LAST);
-		}
 	};
 	const resetTopical = () => {
 		Object.values(textfields).forEach((field) => {
@@ -61,8 +53,17 @@
 		});
 	};
 	const textfields = $state<Record<string, HTMLInputElement | undefined>>({});
-	const TOPICAL_FIRST = 1880;
-	const TOPICAL_LAST = 1937;
+	// the years from 1938 on that can be searched by field, as a sentence part: "1938, 1939, 1940 (partly), …"
+	const fieldYears = $derived.by(() => {
+		const years = data.fieldYears;
+		if (!years) return '';
+		return [...years.full, ...years.partial]
+			.sort((a, b) => a - b)
+			.map((year) =>
+				years.partial.includes(year) ? `${year} (${m.search_fields_partly()})` : String(year)
+			)
+			.join(', ');
+	});
 	const fromToFields = $state<string[]>(['1880', '1950']);
 	const from = $derived(Number(fromToFields[0]));
 	const to = $derived(Number(fromToFields[1]));
@@ -157,11 +158,7 @@
 			if (result.type === 'success' && result.data?.map) {
 				mapData = result.data.map as MapData;
 				// the map as it was at the end of the years searched (swisstopo has one state per year)
-				const fields = String(lastQuery.get('searchstring') ?? '').trim() === '';
-				mapYear = Math.min(
-					fields ? TOPICAL_LAST : 1950,
-					Math.max(1880, Number(lastQuery.get('to')) || 1950)
-				);
+				mapYear = Math.min(1950, Math.max(1880, Number(lastQuery.get('to')) || 1950));
 			} else {
 				mapFailed = true;
 			}
@@ -288,81 +285,84 @@
 			{m.ochre_salty_ocean_spray()}
 		{/if}
 	</button>
-	{#if !(from > TOPICAL_LAST)}
-		<div class="box mx-auto flex w-full flex-col items-center px-4 pb-10 sm:w-fit md:px-16">
-			<div class="w-[300px] md:w-[370px]">
-				<h2>{m.garnet_red_gem_glow()}</h2>
-				<p>{m.moonstone_white_gem_gleam()}</p>
-			</div>
-			<input
-				class="mt-4"
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.entityname1}
-				maxlength="60"
-				name="entityname1"
-				placeholder={m.ruby_smooth_glass_cut()}
-			/>
-			<input
-				class="mt-4"
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.entityname2}
-				maxlength="60"
-				name="entityname2"
-				placeholder={m.mint_bitter_leaf_chew()}
-			/>
-			<input
-				class="mt-4"
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.supplement}
-				maxlength="60"
-				name="supplement"
-				placeholder={m.indigo_hot_flame_flicker()}
-			/>
-			<input
-				class="mt-4"
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.street}
-				maxlength="60"
-				name="street"
-				placeholder={m.agate_soft_silk_weave()}
-			/>
-			<input
-				class="mt-4"
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.locality}
-				maxlength="60"
-				name="locality"
-				placeholder={m.jade_dull_stone_grind()}
-			/>
-			<input
-				class="mt-4"
-				type="text"
-				onfocus={resetFullText}
-				bind:this={textfields.phonenumber}
-				maxlength="60"
-				name="phonenumber"
-				placeholder={m.lavender_dim_shadow_hide()}
-			/>
-		</div>
-		<button
-			class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
-			type="submit"
-		>
-			{#if loading}
-				<span in:typewriter={{ speed: 80 }}>
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own message text -->
-					{@html m.chartreuse_cool_wind_whisper()}
-				</span>
-			{:else}
-				{m.ochre_salty_ocean_spray()}
+	<div class="box mx-auto flex w-full flex-col items-center px-4 pb-10 sm:w-fit md:px-16">
+		<div class="w-[300px] md:w-[370px]">
+			<h2>{m.garnet_red_gem_glow()}</h2>
+			<p>{m.moonstone_white_gem_gleam()}</p>
+			{#if fieldYears}
+				<p class="pt-2 text-sm" data-testid="field-years">
+					{m.search_fields_from_1938({ years: fieldYears })}
+				</p>
 			{/if}
-		</button>
-	{/if}
+		</div>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.entityname1}
+			maxlength="60"
+			name="entityname1"
+			placeholder={m.ruby_smooth_glass_cut()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.entityname2}
+			maxlength="60"
+			name="entityname2"
+			placeholder={m.mint_bitter_leaf_chew()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.supplement}
+			maxlength="60"
+			name="supplement"
+			placeholder={m.indigo_hot_flame_flicker()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.street}
+			maxlength="60"
+			name="street"
+			placeholder={m.agate_soft_silk_weave()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.locality}
+			maxlength="60"
+			name="locality"
+			placeholder={m.jade_dull_stone_grind()}
+		/>
+		<input
+			class="mt-4"
+			type="text"
+			onfocus={resetFullText}
+			bind:this={textfields.phonenumber}
+			maxlength="60"
+			name="phonenumber"
+			placeholder={m.lavender_dim_shadow_hide()}
+		/>
+	</div>
+	<button
+		class="mx-auto h-10 w-fit -translate-y-5 rounded-full border border-current bg-white px-12 font-bold"
+		type="submit"
+	>
+		{#if loading}
+			<span in:typewriter={{ speed: 80 }}>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own message text -->
+				{@html m.chartreuse_cool_wind_whisper()}
+			</span>
+		{:else}
+			{m.ochre_salty_ocean_spray()}
+		{/if}
+	</button>
 </form>
 
 <div class="container mx-auto scroll-mt-4" bind:this={status} aria-live="polite">

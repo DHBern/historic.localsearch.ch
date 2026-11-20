@@ -138,3 +138,26 @@ test('each entry shows a small rendering of its own page (#24)', async ({ page }
 		small!.replace('/full/64,/', '/full/max/')
 	);
 });
+
+// Field search from 1938 on: only the volumes that have been read again have fields.
+
+test('a field search reaches the volumes of 1938–1950 that have fields', async ({ page }) => {
+	await page.goto('/search');
+	await page.locator('input[name=from]').fill('1938');
+	await page.locator('input[name=to]').fill('1950');
+	// the field form stays, and says which years it covers
+	await expect(page.getByTestId('field-years')).toContainText('1938 (teilweise)');
+	await page.locator('input[name=entityname1]').fill('Hirschfelder');
+	await page.locator('input[name=entityname1]').press('Enter');
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 1');
+	await expect(entries(page).first()).toContainText('q. Mt-Blanc 23');
+	await expect(entries(page).first()).toContainText('Genève');
+});
+
+test('a field search over all years includes 1938', async ({ page }) => {
+	await page.goto('/search');
+	await page.locator('input[name=locality]').fill('Genève');
+	await page.locator('input[name=street]').fill('Rhône');
+	await page.locator('input[name=street]').press('Enter');
+	await expect(page.getByTestId('year').last()).toHaveText('1938');
+});

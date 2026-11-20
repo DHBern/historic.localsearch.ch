@@ -1,6 +1,6 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
-import { places, records, streets } from '#lib/server/db/schema.ts';
+import { places, records, streets, volumes } from '#lib/server/db/schema.ts';
 import { and, asc, between, count, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -8,8 +8,6 @@ import { MAX_LENGTH, MAX_ROWS, MIN_LENGTH, escapeLike, excerpt } from '#lib/sear
 
 const FIRST_YEAR = 1880;
 const LAST_YEAR = 1950;
-// fields are only segmented up to 1937 (1938–1950 is unsegmented text)
-const LAST_YEAR_WITH_FIELDS = 1937;
 // counting the hits of a very broad search must not hold up the answer
 const COUNT_TIMEOUT_MS = 4000;
 
@@ -183,7 +181,8 @@ function criteria(formData: FormData, withPlace: boolean) {
 		if (filters.length === 0) {
 			return { error: 'no_criteria' as const };
 		}
-		where = and(...filters, between(records.year, from, Math.min(to, LAST_YEAR_WITH_FIELDS)));
+		// volumes that have not been split into fields have no values to match: they drop out by themselves
+		where = and(...filters, between(records.year, from, to));
 	} else {
 		// full text search
 		if (!termSchema.safeParse(searchString).success) {
@@ -209,6 +208,34 @@ function criteria(formData: FormData, withPlace: boolean) {
 	}
 	return { where, searchString };
 }
+
+/**
+ * Which years from 1938 on can be searched by field: all their volumes, or only some (the others are still
+ * text only). From the table `volumes`, so the form follows the imports by itself.
+ */
+export const load: PageServerLoad = async () => {
+	try {
+		const rows = await getDb()
+			.select({
+				year: volumes.year,
+				all: count(),
+				withFields: sql<number>`count(*) filter (where ${volumes.withFields} > 0)`.mapWith(Number)
+			})
+			.from(volumes)
+			.where(sql`${volumes.year} >= 1938`)
+			.groupBy(volumes.year)
+			.orderBy(asc(volumes.year));
+		return {
+			fieldYears: {
+				full: rows.filter((r) => r.withFields === r.all).map((r) => r.year),
+				partial: rows.filter((r) => r.withFields > 0 && r.withFields < r.all).map((r) => r.year)
+			}
+		};
+	} catch {
+		// no table, no database (preview builds): the form works without the note
+		return { fieldYears: null };
+	}
+};
 
 export const actions: Actions = {
 	search: async (event) => {

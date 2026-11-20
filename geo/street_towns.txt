@@ -1,0 +1,3 @@
+# Municipalities whose entries get street points on the map (#46): number of the municipality (BFS), name.
+# After a change: geo/ref_streets.py to fetch their streets, then geo/build.sh.
+261	Zürich

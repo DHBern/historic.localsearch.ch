@@ -2,7 +2,7 @@
 	import * as m from '#lib/paraglide/messages.js';
 	import { deserialize, enhance } from '$app/forms';
 	import { localizeHref } from '#lib/paraglide/runtime.js';
-	import ResultMap, { type MapPlace } from '#lib/ResultMap.svelte';
+	import ResultMap, { type MapPlace, type MapStreet } from '#lib/ResultMap.svelte';
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
@@ -108,6 +108,37 @@
 	// a click on a circle narrows the list to that municipality; the map keeps the whole result
 	let picked = $state<{ bfs: number; name: string }>();
 	let keepMap = false;
+	// the hits of the chosen municipality per street, for the towns that have street points (#46)
+	type StreetData = {
+		available: boolean;
+		bfs?: number;
+		streets?: MapStreet[];
+		total?: number;
+		shown?: number;
+	};
+	let streetData = $state<StreetData>();
+
+	async function loadStreets(bfs: number) {
+		streetData = undefined;
+		if (!lastQuery) return;
+		try {
+			const body = new FormData();
+			for (const [key, value] of lastQuery) if (key !== 'place') body.append(key, value);
+			body.append('place', String(bfs));
+			const response = await fetch('?/streets', {
+				method: 'POST',
+				body,
+				headers: { 'x-sveltekit-action': 'true' }
+			});
+			const result = deserialize(await response.text());
+			// only if the reader has not chosen another place in the meantime
+			if (result.type === 'success' && result.data?.streets && picked?.bfs === bfs) {
+				streetData = result.data.streets as StreetData;
+			}
+		} catch {
+			// no street points: the map stays at the municipality
+		}
+	}
 
 	async function openMap() {
 		mapOpen = true;
@@ -142,6 +173,8 @@
 
 	async function pick(place: { bfs: number | null; name: string | null } | undefined) {
 		picked = place?.bfs ? { bfs: place.bfs, name: place.name ?? '' } : undefined;
+		streetData = undefined;
+		if (picked) void loadStreets(picked.bfs);
 		keepMap = true;
 		await tick(); // the hidden field takes the value
 		formElement?.requestSubmit();
@@ -173,6 +206,7 @@
 			// a new search: the map and the limit to a municipality belong to the old one
 			formData.delete('place');
 			picked = undefined;
+			streetData = undefined;
 			mapData = undefined;
 			mapOpen = false;
 			mapFailed = false;
@@ -402,7 +436,23 @@
 				{/if}
 			</p>
 			{#if mapData.places.length > 0}
-				<ResultMap places={mapData.places} year={mapYear} selected={picked?.bfs} onpick={pick} />
+				<ResultMap
+					places={mapData.places}
+					year={mapYear}
+					selected={picked?.bfs}
+					streets={streetData?.available ? streetData.streets : undefined}
+					onpick={pick}
+				/>
+				{#if picked && streetData?.available && streetData.streets}
+					<p class="pt-2" data-testid="map-streets">
+						{m.map_streets({
+							name: picked.name,
+							shown: formatNumber(streetData.shown ?? 0),
+							total: formatNumber(streetData.total ?? 0)
+						})}
+						<span class="text-sm">{m.map_street_source()}.</span>
+					</p>
+				{/if}
 				<!-- the same as text, for those who do not use the map -->
 				<p class="pt-3 font-bold">{m.map_largest()}</p>
 				<ul class="flex flex-wrap gap-2 py-2" data-testid="map-list">

@@ -110,5 +110,8 @@
 	"map_largest": "Comuni con più risultati",
 	"map_only": "Solo {name}",
 	"map_only_remove": "Rimuovere il limite a {name}",
-	"map_attribution": "Mappa: viaggio nel tempo, © swisstopo (stato {year})"
+	"map_attribution": "Mappa: viaggio nel tempo, © swisstopo (stato {year})",
+	"map_streets": "A {name}, {shown} risultati su {total} sono indicati nella loro via (punti neri). Il punto è un punto della via attuale con questo nome; i numeri civici non sono localizzati.",
+	"map_street_tooltip": "{name}: {count} risultati",
+	"map_street_source": "Vie: elenco ufficiale delle vie, © swisstopo"
 }

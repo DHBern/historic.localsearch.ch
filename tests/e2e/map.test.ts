@@ -115,3 +115,49 @@ test('a new search closes the map of the old one', async ({ page }) => {
 	await page.locator('input[name=searchstring]').press('Enter');
 	await expect(page.getByTestId('map-panel')).toHaveCount(0);
 });
+
+// Street points inside a town (#46): the fixture has them for Zürich only.
+
+test('a town with street points shows the hits at their streets', async ({ page }) => {
+	await searchWithMap(page, 'strasse');
+	await page.getByTestId('map-toggle').click();
+	await page
+		.getByTestId('map-list')
+		.getByRole('button', { name: /Zürich/ })
+		.click();
+	await expect(page.getByTestId('picked')).toContainText('Nur Zürich');
+	const note = page.getByTestId('map-streets');
+	await expect(note).toContainText('In Zürich stehen');
+	await expect(note).toContainText('Hausnummern sind nicht verortet');
+	await expect(note).toContainText('swisstopo');
+	// the dots are on the map, and the map has gone into the town
+	await expect
+		.poll(async () => Number(await page.getByTestId('map').getAttribute('data-streets')))
+		.toBeGreaterThan(5);
+	await expect
+		.poll(async () => Number(await page.getByTestId('map').getAttribute('data-zoom')))
+		.toBeGreaterThanOrEqual(12);
+	// the numbers in the sentence are those of the list
+	const hits = (await page.getByTestId('hit-count').innerText()).replace(/\D/g, '');
+	await expect(note).toContainText(`von ${hits} Treffern`);
+});
+
+test('a municipality without street points stays as one circle', async ({ page }) => {
+	await searchWithMap(page, 'Hodel');
+	await page.getByTestId('map-toggle').click();
+	await page
+		.getByTestId('map-list')
+		.getByRole('button', { name: /Luzern/ })
+		.click();
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 149');
+	await expect(page.getByTestId('map-streets')).toHaveCount(0);
+	expect(await page.getByTestId('map').getAttribute('data-streets')).toBe('0');
+});
+
+test('the street count needs a municipality', async ({ request }) => {
+	const response = await request.post('/search?/streets', {
+		form: { searchstring: 'strasse' },
+		headers: { 'x-sveltekit-action': 'true', origin: 'http://localhost:4173' }
+	});
+	expect((await response.json()).status).toBe(400);
+});

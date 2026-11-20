@@ -15,22 +15,28 @@
 		uncertain: number;
 	};
 
+	export type MapStreet = { name: string; lat: number; lon: number; n: number };
+
 	let {
 		places,
 		year,
 		selected,
+		streets,
 		onpick
 	}: {
 		places: MapPlace[];
 		year: number;
 		/** number of the municipality the list is limited to: the map zooms to it */
 		selected?: number;
+		/** the hits of the chosen municipality per street, where street points exist */
+		streets?: MapStreet[];
 		onpick: (place: MapPlace) => void;
 	} = $props();
 
 	let element: HTMLDivElement;
 	let map: LeafletMap | undefined;
 	let circles: LayerGroup | undefined;
+	let dots: LayerGroup | undefined;
 	let leaflet: typeof import('leaflet') | undefined;
 	let drawn: MapPlace[] | undefined; // the places the circles on the map stand for
 	let zoom = $state<number>(); // for tests
@@ -115,8 +121,10 @@
 				{ attribution: m.map_attribution({ year: String(year) }), maxZoom: 15 }
 			).addTo(map);
 			circles = L.layerGroup().addTo(map);
+			dots = L.layerGroup().addTo(map);
 			map.on('zoomend', () => (zoom = map?.getZoom()));
 			draw();
+			drawStreets();
 		});
 		return () => {
 			gone = true;
@@ -127,6 +135,37 @@
 	$effect(() => {
 		void places;
 		draw();
+	});
+
+	// streets of the chosen town: small black dots, and the view goes to where they are
+	function drawStreets() {
+		if (!leaflet || !map || !dots) return;
+		const L = leaflet;
+		dots.clearLayers();
+		if (!streets || streets.length === 0) return;
+		const largest = Math.max(1, ...streets.map((street) => street.n));
+		for (const street of streets) {
+			const dot = L.circleMarker([street.lat, street.lon], {
+				radius: 3 + 9 * Math.sqrt(street.n / largest),
+				color: '#fff',
+				weight: 1,
+				fillColor: '#000',
+				fillOpacity: 0.85
+			});
+			const tip = document.createElement('span');
+			tip.textContent = m.map_street_tooltip({ name: street.name, count: formatNumber(street.n) });
+			dot.bindTooltip(tip);
+			dot.addTo(dots);
+		}
+		map.flyToBounds(L.latLngBounds(streets.map((street) => [street.lat, street.lon])).pad(0.1), {
+			maxZoom: 15,
+			duration: 0.6
+		});
+	}
+
+	$effect(() => {
+		void streets;
+		drawStreets();
 	});
 
 	// choosing a municipality zooms to it; removing the limit shows the whole result again
@@ -146,6 +185,7 @@
 	aria-label={m.map_label()}
 	data-testid="map"
 	data-zoom={zoom}
+	data-streets={streets?.length ?? 0}
 ></div>
 
 <style>

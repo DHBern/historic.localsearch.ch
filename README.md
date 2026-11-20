@@ -48,3 +48,21 @@ the tests read the same variables.
 Every pull request runs lint, type check and both test suites in GitHub Actions
 (`.github/workflows/ci.yml`). Vercel also builds a preview of each pull request; the
 preview uses the production database.
+
+## Tables built from `records`
+
+Two small tables are derived from `records` and have to be rebuilt after every import or correction of it. Both
+scripts replace the whole content and can be run again at any time.
+
+| Table     | Read by                              | Rebuild                                     |
+| --------- | ------------------------------------ | ------------------------------------------- |
+| `volumes` | the coverage page (`/coverage`)      | `psql -v ON_ERROR_STOP=1 -f db/volumes.sql` |
+| `places`  | the map of search results (epic #42) | `geo/build.sh`                              |
+
+`geo/build.sh` needs `psql` and `python3` (standard library only) and takes the connection from the usual `PG*`
+variables. It exports the locality strings per volume, resolves them to municipalities of today with
+`geo/build_places.py`, and loads the result with `db/places.sql`. The place register it uses lies in `geo/ref/`:
+the official directory of localities of swisstopo and the municipalities of 1914 from the historicised register
+of the Federal Statistical Office, both taken from [vernetzte-schweiz](https://github.com/thodel/vernetzte-schweiz)
+(`data/ref`, CC0), as is the name matching in `geo/gazetteer.py` (MIT). What the builder could not place, and why,
+is in `geo/out/places.tsv` after a run.

@@ -1,4 +1,4 @@
-import { pgTable, index, text, integer, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, index, text, integer, timestamp, real, primaryKey } from 'drizzle-orm/pg-core';
 
 export const records = pgTable(
 	'records',
@@ -78,3 +78,23 @@ export const volumes = pgTable('volumes', {
 	places: text().notNull(),
 	updated: timestamp({ withTimezone: true }).notNull()
 });
+
+/** Where a locality string of a volume is: filled by geo/build.sh after every import (#43). */
+export const places = pgTable(
+	'places',
+	{
+		locality: text().notNull(),
+		file: text().notNull(),
+		name: text().notNull(),
+		bfs: integer().notNull(),
+		municipality: text().notNull(),
+		canton: text().notNull(),
+		lat: real().notNull(),
+		lon: real().notNull(),
+		placeLat: real('place_lat').notNull(),
+		placeLon: real('place_lon').notNull(),
+		method: text().notNull(),
+		confidence: text().notNull()
+	},
+	(table) => [primaryKey({ columns: [table.locality, table.file] })]
+);

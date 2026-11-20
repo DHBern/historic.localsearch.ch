@@ -38,6 +38,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Load the fixture database
         run: tests/fixtures/load.sh
+      - name: Test the place resolver
+        run: python3 -m unittest discover -s geo
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test:unit

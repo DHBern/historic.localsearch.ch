@@ -98,3 +98,16 @@ export const places = pgTable(
 	},
 	(table) => [primaryKey({ columns: [table.locality, table.file] })]
 );
+
+/** Where a street string of a municipality is: filled by geo/build.sh for the towns in geo/street_towns.txt (#46). */
+export const streets = pgTable(
+	'streets',
+	{
+		bfs: integer().notNull(),
+		street: text().notNull(),
+		name: text().notNull(),
+		lat: real().notNull(),
+		lon: real().notNull()
+	},
+	(table) => [primaryKey({ columns: [table.bfs, table.street] })]
+);

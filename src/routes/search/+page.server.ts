@@ -1,6 +1,6 @@
 import type { Actions } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
-import { places, records } from '#lib/server/db/schema.ts';
+import { places, records, streets } from '#lib/server/db/schema.ts';
 import { and, asc, between, count, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -110,6 +110,55 @@ async function placeCounts(where: SQL | undefined) {
 	});
 }
 
+/**
+ * Hits per street inside one municipality, for the map zoomed into a town (#46). `streets` knows the point of a
+ * street string for the municipalities that have street points; for all others `available` is false.
+ */
+async function streetCounts(where: SQL | undefined, bfs: number) {
+	const db = getDb();
+	return await db.transaction(async (tx) => {
+		await tx.execute(sql.raw(`set local statement_timeout = ${COUNT_TIMEOUT_MS}`));
+		const [known] = await tx.select({ n: count() }).from(streets).where(eq(streets.bfs, bfs));
+		if (!known || known.n === 0) return { available: false as const };
+		// `where` already limits the hits to the municipality
+		const rows = await tx
+			.select({
+				name: streets.name,
+				lat: streets.lat,
+				lon: streets.lon,
+				n: count(),
+				noStreet:
+					sql<number>`count(*) filter (where ${records.street} is null or btrim(${records.street}) = '')`.mapWith(
+						Number
+					)
+			})
+			.from(records)
+			.leftJoin(streets, and(eq(streets.bfs, bfs), eq(streets.street, records.street)))
+			.where(where)
+			.groupBy(streets.name, streets.lat, streets.lon);
+		const unplaced = rows.find((row) => row.name === null);
+		const placed = rows
+			.filter((row) => row.name !== null)
+			.map(({ name, lat, lon, n }) => ({
+				name: name!,
+				lat: Math.round(lat! * 1e5) / 1e5,
+				lon: Math.round(lon! * 1e5) / 1e5,
+				n
+			}))
+			.sort((a, b) => b.n - a.n);
+		const shown = placed.reduce((sum, row) => sum + row.n, 0);
+		return {
+			available: true as const,
+			bfs,
+			streets: placed,
+			total: shown + (unplaced?.n ?? 0),
+			shown,
+			noStreet: unplaced?.noStreet ?? 0,
+			unresolved: (unplaced?.n ?? 0) - (unplaced?.noStreet ?? 0)
+		};
+	});
+}
+
 /** The conditions of a search from its form, or the error to send back. */
 function criteria(formData: FormData, withPlace: boolean) {
 	const from = formData.has('from') ? Number(formData.get('from')) : FIRST_YEAR;
@@ -192,6 +241,21 @@ export const actions: Actions = {
 		} catch (e) {
 			// a very broad search runs into the time limit: no map, the list is not affected
 			console.error('map count failed', e);
+			return fail(503, { error: 'map_unavailable' as const });
+		}
+	},
+
+	/** The hits of one municipality, counted per street: asked for when the map zooms into a town. */
+	streets: async (event) => {
+		const formData = await event.request.formData();
+		const bfs = Number(formData.get('place'));
+		const found = criteria(formData, true);
+		if ('error' in found) return fail(400, { error: found.error });
+		if (!Number.isInteger(bfs) || bfs < 1) return fail(400, { error: 'invalid_place' as const });
+		try {
+			return { streets: await streetCounts(found.where, bfs) };
+		} catch (e) {
+			console.error('street count failed', e);
 			return fail(503, { error: 'map_unavailable' as const });
 		}
 	}

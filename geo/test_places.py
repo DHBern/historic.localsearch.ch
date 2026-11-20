@@ -2,6 +2,7 @@
 import os, sys, unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_places import Resolver, confidence
+import build_streets
 
 R = Resolver()
 
@@ -45,6 +46,30 @@ class Places(unittest.TestCase):
 
     def test_confidence(self):
         self.assertEqual([confidence(h) for h in ("name+canton", "name+volume", "unscharf+exchange")], ["high", "medium", "low"])
+
+
+class Streets(unittest.TestCase):
+    def test_the_street_name_in_a_street_field(self):
+        c = build_streets.clean
+        self.assertEqual(c("Forchstr. 381"), "Forchstrasse")
+        self.assertEqual(c("Bahnhofstrasse 21 1/2"), "Bahnhofstrasse")
+        self.assertEqual(c("Weiher- weg 54"), "Weiherweg")
+        self.assertEqual(c("Briner-str. 1"), "Brinerstrasse")
+        self.assertEqual(c("Junkerng. 50"), "Junkerngasse")
+        self.assertEqual(c("Landenbergstr. 11/Kyburg- strasse"), "Landenbergstrasse")
+        self.assertEqual(c("Stauffacherstr. 3"), "Stauffacherstrasse")
+        self.assertIsNone(c("Zollstr. 24, W'thur"))          # a street of another place
+
+    def test_spelling_does_not_matter_for_the_match(self):
+        k = build_streets.key
+        self.assertEqual(k("Forchstrasse"), k("Forchstr."))
+        self.assertEqual(k("St. Jakobstrasse"), k("St.Jakob-Strasse"))
+
+    def test_the_register_has_points_in_the_town(self):
+        zh = build_streets.register()["261"]
+        name, lat, lon = zh[build_streets.key("Bahnhofstrasse")]
+        self.assertEqual(name, "Bahnhofstrasse")
+        self.assertTrue(47.3 < lat < 47.45 and 8.4 < lon < 8.65)
 
 
 if __name__ == "__main__":

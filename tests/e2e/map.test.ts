@@ -116,7 +116,7 @@ test('a new search closes the map of the old one', async ({ page }) => {
 	await expect(page.getByTestId('map-panel')).toHaveCount(0);
 });
 
-// Street points inside a town (#46): the fixture has them for Zürich only.
+// Street points inside a town (#46): Zürich, Basel and Bern have them.
 
 test('a town with street points shows the hits at their streets', async ({ page }) => {
 	await searchWithMap(page, 'strasse');
@@ -160,4 +160,14 @@ test('the street count needs a municipality', async ({ request }) => {
 		headers: { 'x-sveltekit-action': 'true', origin: 'http://localhost:4173' }
 	});
 	expect((await response.json()).status).toBe(400);
+});
+
+test('Basel has street points too', async ({ page }) => {
+	await searchWithMap(page, 'Hodel');
+	await page.getByTestId('map-toggle').click();
+	await page.getByTestId('map-list').getByRole('button', { name: /Basel/ }).click();
+	await expect(page.getByTestId('map-streets')).toContainText('In Basel stehen');
+	await expect
+		.poll(async () => Number(await page.getByTestId('map').getAttribute('data-streets')))
+		.toBeGreaterThan(3);
 });

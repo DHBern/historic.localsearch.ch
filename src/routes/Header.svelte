@@ -13,7 +13,15 @@
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- localizeHref builds the path -->
 		<a href={localizeHref('/')}>historic.localsearch</a>
 	</h1>
-	<nav class="flex gap-4 md:gap-8">
+	<nav class="flex flex-wrap justify-center gap-4 md:gap-8">
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- localizeHref builds the path -->
+		<a
+			class="flex h-10 items-center rounded-full border border-current px-4"
+			href={localizeHref('/coverage')}
+		>
+			{m.coverage_nav()}
+		</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		<button
 			class="h-10 rounded-full border border-current px-4"
 			onclick={() => handleClick('about')}

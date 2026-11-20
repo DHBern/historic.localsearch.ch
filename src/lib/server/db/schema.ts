@@ -1,4 +1,4 @@
-import { pgTable, index, text, integer } from 'drizzle-orm/pg-core';
+import { pgTable, index, text, integer, timestamp } from 'drizzle-orm/pg-core';
 
 export const records = pgTable(
 	'records',
@@ -65,3 +65,16 @@ export const records = pgTable(
 		};
 	}
 );
+
+/** One row per volume, filled by db/volumes.sql after every import (#25). */
+export const volumes = pgTable('volumes', {
+	file: text().primaryKey(),
+	year: integer().notNull(),
+	entries: integer().notNull(),
+	pages: integer().notNull(),
+	firstPage: integer('first_page'),
+	lastPage: integer('last_page'),
+	withFields: integer('with_fields').notNull(),
+	places: text().notNull(),
+	updated: timestamp({ withTimezone: true }).notNull()
+});

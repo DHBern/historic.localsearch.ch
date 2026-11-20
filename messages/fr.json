@@ -111,7 +111,7 @@
 	"map_only": "Seulement {name}",
 	"map_only_remove": "Lever la limite à {name}",
 	"map_attribution": "Carte : voyage dans le temps, © swisstopo (état {year})",
-	"map_streets": "À {name}, {shown} résultats sur {total} figurent à leur rue (points noirs). Le point est un point de la rue actuelle de ce nom ; les numéros ne sont pas localisés.",
+	"map_streets": "À {name}, {shown} résultats sur {total} figurent à leur rue (points rouges). Le point est un point de la rue actuelle de ce nom ; les numéros ne sont pas localisés.",
 	"map_street_tooltip": "{name} : {count} résultats",
 	"map_street_source": "Rues : répertoire officiel des rues, © swisstopo"
 }

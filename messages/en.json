@@ -112,7 +112,7 @@
 	"map_only": "Only {name}",
 	"map_only_remove": "Remove the limit to {name}",
 	"map_attribution": "Map: journey through time, © swisstopo (state of {year})",
-	"map_streets": "In {name}, {shown} of {total} hits are shown at their street (black dots). The dot is one point of today’s street of that name; house numbers are not located.",
+	"map_streets": "In {name}, {shown} of {total} hits are shown at their street (red dots). The dot is one point of today’s street of that name; house numbers are not located.",
 	"map_street_tooltip": "{name}: {count} hits",
 	"map_street_source": "Streets: official directory of streets, © swisstopo"
 }

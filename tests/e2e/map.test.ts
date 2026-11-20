@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
 // The counts per municipality behind the map (#44), against the fixture database.
 
@@ -48,4 +48,62 @@ test('a field search is counted with its years', async ({ request }) => {
 test('refuses what the search refuses', async ({ request }) => {
 	expect((await mapCounts(request, { searchstring: 'x' })).status).toBe(400);
 	expect((await mapCounts(request, {})).status).toBe(400);
+});
+
+// The map on the result page (#45). The tiles of swisstopo are not fetched in tests.
+
+async function searchWithMap(page: Page, term: string) {
+	await page.route('https://wmts.geo.admin.ch/**', (route) => route.abort());
+	await page.goto('/search');
+	await page.locator('input[name=searchstring]').fill(term);
+	await page.locator('input[name=searchstring]').press('Enter');
+	await expect(page.getByTestId('hit-count')).toBeVisible();
+}
+
+test('the map is offered as an experiment and says what it does not show', async ({ page }) => {
+	const violations: string[] = [];
+	page.on('console', (message) => {
+		if (/Content Security Policy/i.test(message.text())) violations.push(message.text());
+	});
+	await searchWithMap(page, 'Hodel');
+	await expect(page.getByTestId('map-panel')).toHaveCount(0);
+	await page.getByTestId('map-toggle').click();
+	await expect(page.getByTestId('map')).toBeVisible();
+	// one circle per municipality
+	await expect(page.locator('[data-testid=map] path.leaflet-interactive').first()).toBeVisible();
+	const circles = await page.locator('[data-testid=map] path.leaflet-interactive').count();
+	const shown = await page.getByTestId('map-shown').innerText();
+	expect(shown).toContain(`in ${circles} heutigen Gemeinden`);
+	expect(shown).toMatch(/von 3’092 Treffern/);
+	await expect(page.getByTestId('map-no-locality')).toContainText('Bänden ohne Ortsangabe');
+	await expect(page.getByTestId('map-list').locator('button').first()).toHaveText(/Luzern\s+149/);
+	// the policy lets the map through; only the tiles are blocked, by this test
+	expect(violations).toEqual([]);
+	await page.getByTestId('map-toggle').click();
+	await expect(page.getByTestId('map-panel')).toHaveCount(0);
+});
+
+test('choosing a municipality narrows the list, and the limit can be removed', async ({ page }) => {
+	await searchWithMap(page, 'Hodel');
+	await page.getByTestId('map-toggle').click();
+	await page
+		.getByTestId('map-list')
+		.getByRole('button', { name: /Luzern/ })
+		.click();
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 149');
+	await expect(page.getByTestId('picked')).toContainText('Nur Luzern');
+	// the map still shows the whole result
+	await expect(page.getByTestId('map-shown')).toContainText('von 3’092 Treffern');
+	await page.getByTestId('picked').click();
+	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 3’092');
+	await expect(page.getByTestId('picked')).toHaveCount(0);
+});
+
+test('a new search closes the map of the old one', async ({ page }) => {
+	await searchWithMap(page, 'Hodel');
+	await page.getByTestId('map-toggle').click();
+	await expect(page.getByTestId('map')).toBeVisible();
+	await page.locator('input[name=searchstring]').fill('Zürich');
+	await page.locator('input[name=searchstring]').press('Enter');
+	await expect(page.getByTestId('map-panel')).toHaveCount(0);
 });

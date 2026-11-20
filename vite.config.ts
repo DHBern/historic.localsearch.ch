@@ -27,7 +27,8 @@ export default defineConfig({
 						'unsafe-hashes',
 						'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo='
 					],
-					'img-src': ['self', 'data:', 'https://iiif.ptt-archiv.ch'],
+					// wmts.geo.admin.ch: the historical maps of swisstopo under the map of hits (#45)
+					'img-src': ['self', 'data:', 'https://iiif.ptt-archiv.ch', 'https://wmts.geo.admin.ch'],
 					'font-src': ['self'],
 					'connect-src': ['self'],
 					'object-src': ['none'],

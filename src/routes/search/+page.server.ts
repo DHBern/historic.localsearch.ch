@@ -111,7 +111,7 @@ async function placeCounts(where: SQL | undefined) {
 }
 
 /** The conditions of a search from its form, or the error to send back. */
-function criteria(formData: FormData) {
+function criteria(formData: FormData, withPlace: boolean) {
 	const from = formData.has('from') ? Number(formData.get('from')) : FIRST_YEAR;
 	const to = formData.has('to') ? Number(formData.get('to')) : LAST_YEAR;
 	if (!yearSchema.safeParse(from).success || !yearSchema.safeParse(to).success) {
@@ -148,12 +148,22 @@ function criteria(formData: FormData) {
 			between(records.year, from, to)
 		);
 	}
+	// a click on the map narrows the list to one municipality of today (#45); the map itself is not narrowed
+	const place = text(formData.get('place'));
+	if (withPlace && place !== '') {
+		const bfs = Number(place);
+		if (!Number.isInteger(bfs) || bfs < 1 || bfs > 9999) return { error: 'invalid_place' as const };
+		where = and(
+			where,
+			sql`exists (select 1 from ${places} where ${places.locality} = ${records.locality} and ${places.file} = ${records.file} and ${places.bfs} = ${bfs})`
+		);
+	}
 	return { where, searchString };
 }
 
 export const actions: Actions = {
 	search: async (event) => {
-		const found = criteria(await event.request.formData());
+		const found = criteria(await event.request.formData(), true);
 		if ('error' in found) return fail(400, { error: found.error });
 		const { where, searchString } = found;
 
@@ -175,7 +185,7 @@ export const actions: Actions = {
 
 	/** The same search, counted per municipality: asked for only when the map is opened. */
 	map: async (event) => {
-		const found = criteria(await event.request.formData());
+		const found = criteria(await event.request.formData(), false);
 		if ('error' in found) return fail(400, { error: found.error });
 		try {
 			return { map: await placeCounts(found.where) };

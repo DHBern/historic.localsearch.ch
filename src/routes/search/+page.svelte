@@ -1,6 +1,8 @@
 <script lang="ts">
 	import * as m from '#lib/paraglide/messages.js';
-	import { enhance } from '$app/forms';
+	import { deserialize, enhance } from '$app/forms';
+	import { localizeHref } from '#lib/paraglide/runtime.js';
+	import ResultMap, { type MapPlace } from '#lib/ResultMap.svelte';
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
@@ -87,6 +89,59 @@
 		}
 	});
 	let status = $state<HTMLElement>();
+
+	// the map of the hits (#45): asked for only when it is opened
+	type MapData = {
+		places: MapPlace[];
+		total: number;
+		shown: number;
+		noLocality: number;
+		unresolved: number;
+	};
+	let formElement = $state<HTMLFormElement>();
+	let lastQuery: FormData | undefined; // the search the list on screen answers
+	let mapOpen = $state(false);
+	let mapLoading = $state(false);
+	let mapFailed = $state(false);
+	let mapData = $state<MapData>();
+	let mapYear = $state(1937);
+	// a click on a circle narrows the list to that municipality; the map keeps the whole result
+	let picked = $state<{ bfs: number; name: string }>();
+	let keepMap = false;
+
+	async function openMap() {
+		mapOpen = true;
+		if (mapData || !lastQuery) return;
+		mapLoading = true;
+		mapFailed = false;
+		try {
+			const body = new FormData();
+			for (const [key, value] of lastQuery) if (key !== 'place') body.append(key, value);
+			const response = await fetch('?/map', {
+				method: 'POST',
+				body,
+				headers: { 'x-sveltekit-action': 'true' }
+			});
+			const result = deserialize(await response.text());
+			if (result.type === 'success' && result.data?.map) {
+				mapData = result.data.map as MapData;
+				// the map as it was at the end of the years searched (swisstopo has one state per year)
+				mapYear = Math.min(1950, Math.max(1880, Number(lastQuery.get('to')) || 1950));
+			} else {
+				mapFailed = true;
+			}
+		} catch {
+			mapFailed = true;
+		}
+		mapLoading = false;
+	}
+
+	async function pick(place: { bfs: number | null; name: string | null } | undefined) {
+		picked = place?.bfs ? { bfs: place.bfs, name: place.name ?? '' } : undefined;
+		keepMap = true;
+		await tick(); // the hidden field takes the value
+		formElement?.requestSubmit();
+	}
 </script>
 
 <svelte:head>
@@ -98,13 +153,25 @@
 	class="container mx-auto flex flex-col justify-center"
 	action="?/search"
 	data-bg-color="white"
-	use:enhance={() => {
+	bind:this={formElement}
+	use:enhance={({ formData }) => {
 		// `formElement` is this `<form>` element
 		// `formData` is its `FormData` object that's about to be submitted
 		// `action` is the URL to which the form is posted
 		// calling `cancel()` will prevent the submission
 		// `submitter` is the `HTMLElement` that caused the form to be submitted
 		loading = true;
+		lastQuery = formData;
+		if (keepMap) {
+			keepMap = false;
+		} else {
+			// a new search: the map and the limit to a municipality belong to the old one
+			formData.delete('place');
+			picked = undefined;
+			mapData = undefined;
+			mapOpen = false;
+			mapFailed = false;
+		}
 
 		return async ({ update }) => {
 			// `result` is an `ActionResult` object
@@ -118,6 +185,7 @@
 		};
 	}}
 >
+	<input type="hidden" name="place" value={picked?.bfs ?? ''} />
 	<div class="box mx-auto flex w-full flex-col items-center px-4 pb-10 sm:w-fit md:px-16">
 		<div class="w-[300px] md:w-[370px]">
 			<h2>{m.emerald_soft_wood_carve()}</h2>
@@ -261,6 +329,18 @@
 	{#if errorText}
 		<p class="status" role="alert" data-testid="error">{errorText}</p>
 	{:else if form?.results}
+		{#if picked}
+			<p class="status">
+				<button
+					class="rounded-full border border-current px-4"
+					data-testid="picked"
+					aria-label={m.map_only_remove({ name: picked.name })}
+					onclick={() => pick(undefined)}
+				>
+					{m.map_only({ name: picked.name })} ×
+				</button>
+			</p>
+		{/if}
 		{#if loaded === 0}
 			<p class="status" data-testid="no-hits">{m.amethyst_shiny_crystal_sparkle()}</p>
 		{:else}
@@ -275,8 +355,69 @@
 				</p>
 			{/if}
 		{/if}
+		{#if loaded > 0 || picked}
+			<p class="status">
+				<button
+					class="h-10 rounded-full border border-current px-4"
+					data-testid="map-toggle"
+					aria-expanded={mapOpen}
+					onclick={() => (mapOpen ? (mapOpen = false) : openMap())}
+				>
+					{mapOpen ? m.map_hide() : m.map_show()}
+				</button>
+				<span class="experimental">{m.map_experimental()}</span>
+			</p>
+		{/if}
 	{/if}
 </div>
+
+{#if mapOpen && form?.results}
+	<div class="container mx-auto px-4 pb-6" data-testid="map-panel">
+		{#if mapLoading}
+			<p class="py-2">{m.map_loading()}</p>
+		{:else if mapFailed || !mapData}
+			<p class="py-2" role="alert" data-testid="map-error">{m.map_unavailable()}</p>
+		{:else}
+			<p class="py-2" data-testid="map-shown">
+				{m.map_shown({
+					shown: formatNumber(mapData.shown),
+					total: formatNumber(mapData.total),
+					places: formatNumber(mapData.places.length)
+				})}
+				{#if mapData.noLocality > 0}
+					<span data-testid="map-no-locality">
+						{m.map_no_locality({ count: formatNumber(mapData.noLocality) })}
+					</span>
+				{/if}
+				{#if mapData.unresolved > 0}
+					<span data-testid="map-unresolved">
+						{m.map_unresolved({ count: formatNumber(mapData.unresolved) })}
+					</span>
+				{/if}
+			</p>
+			{#if mapData.places.length > 0}
+				<ResultMap places={mapData.places} year={mapYear} onpick={pick} />
+				<!-- the same as text, for those who do not use the map -->
+				<p class="pt-3 font-bold">{m.map_largest()}</p>
+				<ul class="flex flex-wrap gap-2 py-2" data-testid="map-list">
+					{#each mapData.places.slice(0, 12) as place (place.bfs)}
+						<li>
+							<button class="rounded-full border border-current px-3" onclick={() => pick(place)}>
+								{place.name}
+								{formatNumber(place.n)}
+							</button>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			<p class="py-2 text-sm">
+				{m.map_note()}
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- localizeHref builds the path -->
+				<a href={localizeHref('/coverage')}>{m.coverage_nav()}</a>.
+			</p>
+		{/if}
+	</div>
+{/if}
 
 {#if Object.keys(visibleResults).length > 0}
 	<div class="container mx-auto">
@@ -392,6 +533,14 @@
 <style lang="postcss">
 	.status {
 		@apply px-4 py-2;
+	}
+	.experimental {
+		margin-left: 0.5em;
+		padding: 0 0.4em;
+		font-size: 0.75em;
+		font-variant-caps: all-small-caps;
+		letter-spacing: 0.1em;
+		background-color: #fdfd03;
 	}
 	.box {
 		box-shadow: 10px 10px 5px #aaa;

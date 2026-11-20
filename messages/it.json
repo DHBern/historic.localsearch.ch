@@ -94,5 +94,21 @@
 	"coverage_missing_title": "Non presenti nella banca dati",
 	"coverage_missing_text": "Questi volumi figurano nel catalogo dell’archivio ma non sono ricercabili:",
 	"coverage_unavailable": "La panoramica non è disponibile al momento.",
-	"coverage_to_search": "Alla ricerca"
+	"coverage_to_search": "Alla ricerca",
+	"map_show": "Mostra sulla mappa",
+	"map_hide": "Chiudi la mappa",
+	"map_experimental": "prova",
+	"map_loading": "Caricamento della mappa …",
+	"map_unavailable": "Per questa ricerca non è possibile creare una mappa. Restringere la ricerca.",
+	"map_label": "Mappa dei risultati per comune attuale",
+	"map_shown": "{shown} risultati su {total} sono sulla mappa, in {places} comuni attuali.",
+	"map_no_locality": "{count} risultati provengono da volumi senza località per voce.",
+	"map_unresolved": "{count} risultati hanno una località che non è stato possibile localizzare.",
+	"map_note": "La mappa è una prova. Le località sono assegnate automaticamente e possono essere errate; un cerchio rappresenta un comune attuale. Non tutti i volumi sono completi:",
+	"map_tooltip": "{name} ({canton}): {count} risultati",
+	"map_tooltip_uncertain": "di cui {count} localizzati tramite grafia simile",
+	"map_largest": "Comuni con più risultati",
+	"map_only": "Solo {name}",
+	"map_only_remove": "Rimuovere il limite a {name}",
+	"map_attribution": "Mappa: viaggio nel tempo, © swisstopo (stato {year})"
 }

@@ -70,6 +70,10 @@ class Streets(unittest.TestCase):
         name, lat, lon = zh[build_streets.key("Bahnhofstrasse")]
         self.assertEqual(name, "Bahnhofstrasse")
         self.assertTrue(47.3 < lat < 47.45 and 8.4 < lon < 8.65)
+        # every listed town has its streets
+        reg = build_streets.register()
+        self.assertEqual(reg["2701"][build_streets.key("Güterstr.")][0], "Güterstrasse")
+        self.assertEqual(reg["351"][build_streets.key("Schwarztorstrasse")][0], "Schwarztorstrasse")
 
 
 if __name__ == "__main__":

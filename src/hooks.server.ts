@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit/hooks';
+import { sequence } from '@sveltejs/kit/hooks';
 import { paraglideMiddleware } from '#lib/paraglide/server.js';
 import { baseLocale, cookieMaxAge, cookieName, locales } from '#lib/paraglide/runtime.js';
 
@@ -39,4 +40,21 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
 		});
 	});
 
-export const handle: Handle = paraglideHandle;
+/**
+ * #30. The Content-Security-Policy is written by SvelteKit (vite.config.ts), because it needs a nonce per
+ * page; these three are the same for every answer.
+ */
+export const securityHeaders: Record<string, string> = {
+	'X-Content-Type-Options': 'nosniff',
+	'Referrer-Policy': 'strict-origin-when-cross-origin',
+	// for browsers that do not know `frame-ancestors`
+	'X-Frame-Options': 'DENY'
+};
+
+const headersHandle: Handle = async ({ event, resolve }) => {
+	const response = await resolve(event);
+	for (const [name, value] of Object.entries(securityHeaders)) response.headers.set(name, value);
+	return response;
+};
+
+export const handle: Handle = sequence(headersHandle, paraglideHandle);

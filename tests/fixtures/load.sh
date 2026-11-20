@@ -11,4 +11,7 @@ psql -X -q -v ON_ERROR_STOP=1 -c "\copy records from 'records.tsv'"
 psql -X -q -v ON_ERROR_STOP=1 -f indexes.sql
 # the per-volume summary, with the same script production uses
 psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS volumes" -f ../../db/volumes.sql >/dev/null
+# the place table for the map, with the same scripts production uses
+GEO_OUT="$(mktemp -d)" ../../geo/build.sh >/dev/null
+psql -X -t -c "select count(*) || ' place keys loaded' from places"
 psql -X -t -c "select count(*) || ' rows loaded' from records"

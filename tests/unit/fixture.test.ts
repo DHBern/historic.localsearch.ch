@@ -40,4 +40,16 @@ describe('fixture database', () => {
 		expect(fields).toBeGreaterThan(1000);
 		expect(fragments).toBeGreaterThan(1000);
 	});
+
+	it('has the place table for the map, built by geo/build.sh', async () => {
+		const [zh] = await sql`
+			select municipality, canton, confidence from places
+			where locality = 'Zürich' and file = 'P-260-1_Zuerich_1880'`;
+		expect(zh).toEqual({ municipality: 'Zürich', canton: 'ZH', confidence: 'high' });
+		// every row points into Switzerland
+		const [{ n }] = await sql`
+			select count(*)::int n from places
+			where lat not between 45.8 and 47.9 or lon not between 5.9 and 10.5`;
+		expect(n).toBe(0);
+	});
 });

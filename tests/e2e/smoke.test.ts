@@ -67,3 +67,11 @@ test('the language switch changes the interface', async ({ page }) => {
 	await expect(page).toHaveURL(/\/en\/search/);
 	await expect(page.getByRole('button', { name: 'Help' })).toBeVisible();
 });
+
+test('the about text says that the data are machine-generated', async ({ page }) => {
+	await page.goto('/search');
+	await page.getByRole('button', { name: 'Über' }).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.getByRole('heading', { name: 'Maschinell erzeugte Daten' })).toBeVisible();
+	await expect(dialog).toContainText('nicht Eintrag für Eintrag von Hand geprüft');
+});

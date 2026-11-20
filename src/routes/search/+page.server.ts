@@ -1,7 +1,7 @@
 import type { Actions } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
-import { records } from '#lib/server/db/schema.ts';
-import { and, asc, between, count, ilike, or, sql, type SQL } from 'drizzle-orm';
+import { places, records } from '#lib/server/db/schema.ts';
+import { and, asc, between, count, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { MAX_LENGTH, MAX_ROWS, MIN_LENGTH, escapeLike, excerpt } from '#lib/search.ts';
@@ -55,45 +55,107 @@ async function run(where: SQL | undefined) {
 	}
 }
 
+/**
+ * Hits per municipality of today for the whole result, for the map (#44): one row per municipality with its
+ * point, and what cannot be shown. The table `places` knows where a locality string of a volume is (#43).
+ */
+async function placeCounts(where: SQL | undefined) {
+	const db = getDb();
+	return await db.transaction(async (tx) => {
+		await tx.execute(sql.raw(`set local statement_timeout = ${COUNT_TIMEOUT_MS}`));
+		const rows = await tx
+			.select({
+				bfs: places.bfs,
+				name: places.municipality,
+				canton: places.canton,
+				lat: places.lat,
+				lon: places.lon,
+				n: count(),
+				// hits whose place was only matched by a similar spelling
+				uncertain: sql<number>`count(*) filter (where ${places.confidence} = 'low')`.mapWith(
+					Number
+				),
+				// hits without any locality (volumes without fields)
+				noLocality:
+					sql<number>`count(*) filter (where ${records.locality} is null or btrim(${records.locality}) = '')`.mapWith(
+						Number
+					)
+			})
+			.from(records)
+			.leftJoin(places, and(eq(places.locality, records.locality), eq(places.file, records.file)))
+			.where(where)
+			.groupBy(places.bfs, places.municipality, places.canton, places.lat, places.lon);
+		const unplaced = rows.find((row) => row.bfs === null);
+		const placed = rows
+			.filter((row) => row.bfs !== null)
+			.map(({ bfs, name, canton, lat, lon, n, uncertain }) => ({
+				bfs,
+				name,
+				canton,
+				// five decimals are about a metre; real columns come back with float noise
+				lat: Math.round(lat! * 1e5) / 1e5,
+				lon: Math.round(lon! * 1e5) / 1e5,
+				n,
+				uncertain
+			}))
+			.sort((a, b) => b.n - a.n);
+		const shown = placed.reduce((sum, row) => sum + row.n, 0);
+		return {
+			places: placed,
+			total: shown + (unplaced?.n ?? 0),
+			shown,
+			noLocality: unplaced?.noLocality ?? 0,
+			unresolved: (unplaced?.n ?? 0) - (unplaced?.noLocality ?? 0)
+		};
+	});
+}
+
+/** The conditions of a search from its form, or the error to send back. */
+function criteria(formData: FormData) {
+	const from = formData.has('from') ? Number(formData.get('from')) : FIRST_YEAR;
+	const to = formData.has('to') ? Number(formData.get('to')) : LAST_YEAR;
+	if (!yearSchema.safeParse(from).success || !yearSchema.safeParse(to).success) {
+		return { error: 'invalid_years' as const };
+	}
+
+	const searchString = text(formData.get('searchstring'));
+	let where: SQL | undefined;
+	if (searchString === '') {
+		// search by field
+		const filters: SQL[] = [];
+		for (const fieldName of fieldNames) {
+			const value = text(formData.get(fieldName));
+			if (value === '') continue;
+			if (!termSchema.safeParse(value).success) {
+				return { error: 'too_short' as const };
+			}
+			filters.push(contains(records[fieldName])(value));
+		}
+		if (filters.length === 0) {
+			return { error: 'no_criteria' as const };
+		}
+		where = and(...filters, between(records.year, from, Math.min(to, LAST_YEAR_WITH_FIELDS)));
+	} else {
+		// full text search
+		if (!termSchema.safeParse(searchString).success) {
+			return { error: 'too_short' as const };
+		}
+		where = and(
+			or(
+				...fieldNames.map((fieldName) => contains(records[fieldName])(searchString)),
+				contains(records.aggregatedcontent)(searchString)
+			),
+			between(records.year, from, to)
+		);
+	}
+	return { where, searchString };
+}
+
 export const actions: Actions = {
 	search: async (event) => {
-		const formData = await event.request.formData();
-		const from = formData.has('from') ? Number(formData.get('from')) : FIRST_YEAR;
-		const to = formData.has('to') ? Number(formData.get('to')) : LAST_YEAR;
-		if (!yearSchema.safeParse(from).success || !yearSchema.safeParse(to).success) {
-			return fail(400, { error: 'invalid_years' as const });
-		}
-
-		const searchString = text(formData.get('searchstring'));
-		let where: SQL | undefined;
-		if (searchString === '') {
-			// search by field
-			const filters: SQL[] = [];
-			for (const fieldName of fieldNames) {
-				const value = text(formData.get(fieldName));
-				if (value === '') continue;
-				if (!termSchema.safeParse(value).success) {
-					return fail(400, { error: 'too_short' as const });
-				}
-				filters.push(contains(records[fieldName])(value));
-			}
-			if (filters.length === 0) {
-				return fail(400, { error: 'no_criteria' as const });
-			}
-			where = and(...filters, between(records.year, from, Math.min(to, LAST_YEAR_WITH_FIELDS)));
-		} else {
-			// full text search
-			if (!termSchema.safeParse(searchString).success) {
-				return fail(400, { error: 'too_short' as const });
-			}
-			where = and(
-				or(
-					...fieldNames.map((fieldName) => contains(records[fieldName])(searchString)),
-					contains(records.aggregatedcontent)(searchString)
-				),
-				between(records.year, from, to)
-			);
-		}
+		const found = criteria(await event.request.formData());
+		if ('error' in found) return fail(400, { error: found.error });
+		const { where, searchString } = found;
 
 		try {
 			const { rows, total } = await run(where);
@@ -108,6 +170,19 @@ export const actions: Actions = {
 		} catch (e) {
 			console.error('search failed', e);
 			return fail(500, { error: 'failed' as const });
+		}
+	},
+
+	/** The same search, counted per municipality: asked for only when the map is opened. */
+	map: async (event) => {
+		const found = criteria(await event.request.formData());
+		if ('error' in found) return fail(400, { error: found.error });
+		try {
+			return { map: await placeCounts(found.where) };
+		} catch (e) {
+			// a very broad search runs into the time limit: no map, the list is not affected
+			console.error('map count failed', e);
+			return fail(503, { error: 'map_unavailable' as const });
 		}
 	}
 };

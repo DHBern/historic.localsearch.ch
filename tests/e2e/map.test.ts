@@ -92,11 +92,19 @@ test('choosing a municipality narrows the list, and the limit can be removed', a
 		.click();
 	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 149');
 	await expect(page.getByTestId('picked')).toContainText('Nur Luzern');
+	// the map zooms to the municipality and its surroundings, it is not drawn anew for the whole country
+	await expect
+		.poll(async () => Number(await page.getByTestId('map').getAttribute('data-zoom')))
+		.toBeGreaterThanOrEqual(11);
+	await expect(page.getByTestId('map')).toBeInViewport();
 	// the map still shows the whole result
 	await expect(page.getByTestId('map-shown')).toContainText('von 3’092 Treffern');
 	await page.getByTestId('picked').click();
 	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 3’092');
 	await expect(page.getByTestId('picked')).toHaveCount(0);
+	await expect
+		.poll(async () => Number(await page.getByTestId('map').getAttribute('data-zoom')))
+		.toBeLessThan(9);
 });
 
 test('a new search closes the map of the old one', async ({ page }) => {

@@ -126,7 +126,11 @@
 			if (result.type === 'success' && result.data?.map) {
 				mapData = result.data.map as MapData;
 				// the map as it was at the end of the years searched (swisstopo has one state per year)
-				mapYear = Math.min(1950, Math.max(1880, Number(lastQuery.get('to')) || 1950));
+				const fields = String(lastQuery.get('searchstring') ?? '').trim() === '';
+				mapYear = Math.min(
+					fields ? TOPICAL_LAST : 1950,
+					Math.max(1880, Number(lastQuery.get('to')) || 1950)
+				);
 			} else {
 				mapFailed = true;
 			}
@@ -162,6 +166,7 @@
 		// `submitter` is the `HTMLElement` that caused the form to be submitted
 		loading = true;
 		lastQuery = formData;
+		const fromMap = keepMap;
 		if (keepMap) {
 			keepMap = false;
 		} else {
@@ -181,7 +186,8 @@
 			loading = false;
 			// the forms fill the screen: bring the answer into view
 			await tick();
-			status?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			// not after a choice on the map: the reader is looking at the map
+			if (!fromMap) status?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		};
 	}}
 >
@@ -396,7 +402,7 @@
 				{/if}
 			</p>
 			{#if mapData.places.length > 0}
-				<ResultMap places={mapData.places} year={mapYear} onpick={pick} />
+				<ResultMap places={mapData.places} year={mapYear} selected={picked?.bfs} onpick={pick} />
 				<!-- the same as text, for those who do not use the map -->
 				<p class="pt-3 font-bold">{m.map_largest()}</p>
 				<ul class="flex flex-wrap gap-2 py-2" data-testid="map-list">

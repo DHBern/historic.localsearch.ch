@@ -18,13 +18,38 @@
 	let {
 		places,
 		year,
+		selected,
 		onpick
-	}: { places: MapPlace[]; year: number; onpick: (place: MapPlace) => void } = $props();
+	}: {
+		places: MapPlace[];
+		year: number;
+		/** number of the municipality the list is limited to: the map zooms to it */
+		selected?: number;
+		onpick: (place: MapPlace) => void;
+	} = $props();
 
 	let element: HTMLDivElement;
 	let map: LeafletMap | undefined;
 	let circles: LayerGroup | undefined;
 	let leaflet: typeof import('leaflet') | undefined;
+	let drawn: MapPlace[] | undefined; // the places the circles on the map stand for
+	let zoom = $state<number>(); // for tests
+
+	// a municipality and its surroundings
+	const PLACE_ZOOM = 11;
+
+	/** The whole result, or the chosen municipality with its surroundings. */
+	function frame() {
+		if (!leaflet || !map || places.length === 0) return;
+		const chosen = selected === undefined ? undefined : places.find((p) => p.bfs === selected);
+		if (chosen) {
+			map.flyTo([chosen.lat, chosen.lon], Math.max(map.getZoom(), PLACE_ZOOM), { duration: 0.6 });
+		} else {
+			map.fitBounds(leaflet.latLngBounds(places.map((p) => [p.lat, p.lon])).pad(0.05), {
+				maxZoom: PLACE_ZOOM
+			});
+		}
+	}
 
 	const label = (place: MapPlace) => {
 		const text = m.map_tooltip({
@@ -60,10 +85,10 @@
 			circle.on('click', () => onpick(place));
 			circle.addTo(circles);
 		}
-		if (places.length > 0) {
-			map.fitBounds(L.latLngBounds(places.map((place) => [place.lat, place.lon])).pad(0.05), {
-				maxZoom: 11
-			});
+		// a new result is framed anew; the same result keeps the view the user has
+		if (drawn !== places) {
+			drawn = places;
+			frame();
 		}
 	}
 
@@ -90,6 +115,7 @@
 				{ attribution: m.map_attribution({ year: String(year) }), maxZoom: 15 }
 			).addTo(map);
 			circles = L.layerGroup().addTo(map);
+			map.on('zoomend', () => (zoom = map?.getZoom()));
 			draw();
 		});
 		return () => {
@@ -102,6 +128,15 @@
 		void places;
 		draw();
 	});
+
+	// choosing a municipality zooms to it; removing the limit shows the whole result again
+	let framed: number | undefined;
+	$effect(() => {
+		const now = selected;
+		if (now === framed) return;
+		framed = now;
+		frame();
+	});
 </script>
 
 <div
@@ -110,6 +145,7 @@
 	role="application"
 	aria-label={m.map_label()}
 	data-testid="map"
+	data-zoom={zoom}
 ></div>
 
 <style>

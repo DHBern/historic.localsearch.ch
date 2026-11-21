@@ -12,13 +12,17 @@ psql -X -q -v ON_ERROR_STOP=1 -c "\copy records (entityname1, entityname2, suppl
 # wife's family name ("Buser-Hodel" -> Hodel) needs both halves to stand alone
 psql -X -q -v ON_ERROR_STOP=1 -c "\\copy records (entityname1, entityname2, supplement, street, locality, phonenumber, year, page, file, network, aggregatedcontent) from 'records_buser.tsv'"
 # entries of a re-read volume, with kind, title and alliance (#58)
-psql -X -q -v ON_ERROR_STOP=1 -c "\copy records from 'records_1938.tsv'"
+psql -X -q -v ON_ERROR_STOP=1 -c "\copy records (entityname1, entityname2, supplement, street, locality, phonenumber, year, page, file, network, aggregatedcontent, kind, title, alliance) from 'records_1938.tsv'"
 psql -X -q -v ON_ERROR_STOP=1 -f indexes.sql
 # the per-volume summary, with the same script production uses
 psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS volumes" -f ../../db/volumes.sql >/dev/null
 # title, second line and wife's family name of the older volumes, by the rules production uses (#58).
 # The fixture is small: a surname counts from 3 entries of its own.
 psql -X -q -v ON_ERROR_STOP=1 -v min_count=3 -f ../../db/subscriber_info.sql >/dev/null
+# the occupation register and the occupations of every entry, with the scripts production uses (#58)
+OCC_OUT="$(mktemp -d)" ../../occ/build.sh >/dev/null
+psql -X -q -v ON_ERROR_STOP=1 -f ../../db/occupations_fill.sql >/dev/null
+psql -X -t -c "select count(occupations) || ' entries with an occupation' from records"
 # the place table for the map, with the same scripts production uses
 GEO_OUT="$(mktemp -d)" ../../geo/build.sh >/dev/null
 psql -X -t -c "select count(*) || ' place keys loaded' from places"

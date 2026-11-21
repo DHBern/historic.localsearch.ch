@@ -32,3 +32,4 @@ src/lib/paraglide
 # Place table build (geo/build.sh)
 /geo/out
 __pycache__
+/occ/out

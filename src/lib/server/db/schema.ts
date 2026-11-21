@@ -17,7 +17,9 @@ export const records = pgTable(
 		// from the re-reading of 1938–1950 only (#58): person / firma / amt / zusatz, title, wife's family name
 		kind: text(),
 		title: text(),
-		alliance: text()
+		alliance: text(),
+		// ids of the normalised occupations and trades found in the supplement (#58), filled by db/occupations_fill.sql
+		occupations: text().array()
 	},
 	(table) => {
 		return {
@@ -115,3 +117,13 @@ export const streets = pgTable(
 	},
 	(table) => [primaryKey({ columns: [table.bfs, table.street] })]
 );
+
+/** The normalised occupations and trades (#58): filled by occ/build.sh from occ/register.tsv. */
+export const occupationRegister = pgTable('occupation_register', {
+	id: text().primaryKey(),
+	kind: text().notNull(),
+	class: text().notNull(),
+	de: text().notNull(),
+	fr: text().notNull(),
+	it: text().notNull()
+});

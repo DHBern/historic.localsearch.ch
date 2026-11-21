@@ -228,3 +228,37 @@ test('second lines of the older volumes can be left out', async ({ page }) => {
 	expect(all).toBeGreaterThan(0);
 	expect(Number((await count(true)) || 0)).toBeLessThan(all);
 });
+
+// Occupation search with the register (#58, O-5).
+
+test('an occupation from the list finds its spellings and abbreviations', async ({ page }) => {
+	await openSearch(page);
+	await page.getByTestId('occupation').fill('Kaufmann');
+	await page.getByTestId('occupation').press('Enter');
+	await expect(page.getByTestId('hit-count')).toBeVisible();
+	// the first hits carry the word written out and abbreviated
+	const shown = (await entries(page).allInnerTexts()).join('\n');
+	expect(shown).toContain('Kaufmann');
+	expect(shown).toContain('Kfm.');
+	await expect(page.getByTestId('occupations').first()).toContainText('Kaufmann');
+});
+
+test('the occupation combines with a name', async ({ page }) => {
+	await openSearch(page);
+	await page.locator('input[name=entityname1]').fill('Hodel');
+	await page.getByTestId('occupation').fill('Metzger');
+	await page.getByTestId('occupation').press('Enter');
+	await expect(page.getByTestId('hit-count')).toBeVisible();
+	for (const entry of await entries(page).allInnerTexts()) {
+		expect(entry).toContain('Hodel');
+		expect(entry).toMatch(/Metzger|bouch/i);
+	}
+});
+
+test('a text that is not in the list is not searched', async ({ page }) => {
+	await openSearch(page);
+	await page.getByTestId('occupation').fill('Raumfahrer');
+	await page.getByTestId('occupation').press('Enter');
+	await expect(page.getByTestId('occupation-unknown')).toBeVisible();
+	await expect(page.getByTestId('hit-count')).toHaveCount(0);
+});

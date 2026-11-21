@@ -52,4 +52,19 @@ describe('fixture database', () => {
 			where lat not between 45.8 and 47.9 or lon not between 5.9 and 10.5`;
 		expect(n).toBe(0);
 	});
+
+	it('has the occupation register and the occupations of the entries', async () => {
+		const [{ n }] = await sql`select count(*)::int n from occupation_register`;
+		expect(n).toBeGreaterThan(100);
+		const forms = await sql`
+			select distinct supplement from records
+			where occupations @> array['landwirt'] order by 1`;
+		// one occupation, several printed forms
+		expect(forms.length).toBeGreaterThan(1);
+		// every id in the entries is an id of the register
+		const [{ unknown }] = await sql`
+			select count(*)::int unknown from (select distinct unnest(occupations) id from records) x
+			where id not in (select id from occupation_register)`;
+		expect(unknown).toBe(0);
+	});
 });

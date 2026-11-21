@@ -128,5 +128,9 @@
 	"field_new_note": "In the older volumes, title, second lines and the wife’s family name were read from the printed fields by rule; in the volumes read again, from 1938 on, they were recorded while reading. Person, firm and office are told apart only in the volumes read again: filtering by them searches these volumes only.",
 	"result_title": "Title",
 	"result_alliance": "Wife’s family name",
-	"result_kind": "Kind"
+	"result_kind": "Kind",
+	"field_occupation": "Occupation or trade from the list",
+	"field_occupation_note": "The list brings spellings, abbreviations and languages together: “Landwirt” also finds “Landw.”, “agric.” and “agricoltore”. It was assigned by machine and covers about two thirds of the entries with an occupation; the field “occupation” above still searches the printed text.",
+	"field_occupation_unknown": "Please choose an occupation from the list or clear the field.",
+	"result_occupation": "Occupation/trade (normalised)"
 }

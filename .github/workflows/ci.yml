@@ -40,6 +40,8 @@ jobs:
         run: tests/fixtures/load.sh
       - name: Test the place resolver
         run: python3 -m unittest discover -s geo
+      - name: Test the occupation register
+        run: python3 -m unittest discover -s occ
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test:unit

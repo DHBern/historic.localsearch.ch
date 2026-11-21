@@ -17,5 +17,7 @@ CREATE TABLE records (
 	-- from the re-reading of 1938-1950 only (#58)
 	kind text,
 	title text,
-	alliance text
+	alliance text,
+	-- ids of the normalised occupations, from the occupation register (#58)
+	occupations text[]
 );

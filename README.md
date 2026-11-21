@@ -54,12 +54,13 @@ preview uses the production database.
 Two small tables are derived from `records` and have to be rebuilt after every import or correction of it. Both
 scripts replace the whole content and can be run again at any time.
 
-| Table                                                                           | Read by                                                                  | Rebuild                                                                         |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| `volumes`                                                                       | the coverage page (`/coverage`)                                          | `psql -v ON_ERROR_STOP=1 -f db/volumes.sql`                                     |
-| `places`                                                                        | the map of search results (epic #42)                                     | `geo/build.sh`                                                                  |
-| `streets`                                                                       | street points on that map, for the towns in `geo/street_towns.txt` (#46) | `geo/build.sh` (same run)                                                       |
-| columns `title`, `kind`, `alliance` of `records`, for volumes in the old format | the field search (wife's family name, second lines)                      | `psql -f db/subscriber_info.sql`, volume by volume on production (see the file) |
+| Table                                                                             | Read by                                                                  | Rebuild                                                                         |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `volumes`                                                                         | the coverage page (`/coverage`)                                          | `psql -v ON_ERROR_STOP=1 -f db/volumes.sql`                                     |
+| `places`                                                                          | the map of search results (epic #42)                                     | `geo/build.sh`                                                                  |
+| `streets`                                                                         | street points on that map, for the towns in `geo/street_towns.txt` (#46) | `geo/build.sh` (same run)                                                       |
+| columns `title`, `kind`, `alliance` of `records`, for volumes in the old format   | the field search (wife's family name, second lines)                      | `psql -f db/subscriber_info.sql`, volume by volume on production (see the file) |
+| `occupation_register`, `occupation_map` and the column `occupations` of `records` | the occupation search (#58)                                              | `occ/build.sh`, then `occ/fill_all.sh` (volume by volume)                       |
 
 `geo/build.sh` needs `psql` and `python3` (standard library only) and takes the connection from the usual `PG*`
 variables. It exports the locality strings per volume, resolves them to municipalities of today with
@@ -72,3 +73,8 @@ is in `geo/out/places.tsv` after a run.
 Street points come from the official directory of streets of swisstopo (source: Federal Office of Topography
 swisstopo). `geo/ref/streets_official.csv` holds the streets of the listed towns only; after adding a town, download
 the directory and run `python3 geo/ref_streets.py <file>`, then `geo/build.sh`.
+
+The occupation register is `occ/register.tsv`: one row per normalised occupation or trade, with one of 16 coarse
+classes, its name in German, French and Italian, and a pattern of stems and abbreviations. `occ/register.py` matches
+it against the supplement field; `python3 -m unittest discover -s occ` checks it. To add or correct an occupation,
+edit the table, run the tests, then `occ/build.sh` and `occ/fill_all.sh`.

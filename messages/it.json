@@ -127,5 +127,9 @@
 	"field_new_note": "Nei volumi più vecchi, titolo, righe secondarie e cognome della moglie sono stati ricavati dai campi stampati secondo regole; nei volumi riletti, dal 1938, sono stati registrati durante la lettura. Persona, ditta e ufficio sono distinti solo nei volumi riletti: questo filtro cerca solo in questi volumi.",
 	"result_title": "Titolo",
 	"result_alliance": "Cognome della moglie",
-	"result_kind": "Tipo"
+	"result_kind": "Tipo",
+	"field_occupation": "Professione o commercio dall’elenco",
+	"field_occupation_note": "L’elenco riunisce grafie, abbreviazioni e lingue: «Landwirt» trova anche «Landw.», «agric.» e «agricoltore». È assegnato automaticamente e copre circa due terzi delle voci con professione; il campo «professione» qui sopra cerca ancora nel testo stampato.",
+	"field_occupation_unknown": "Scegliere una professione dall’elenco o svuotare il campo.",
+	"result_occupation": "Professione/commercio (normalizzato)"
 }

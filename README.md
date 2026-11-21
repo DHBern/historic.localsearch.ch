@@ -54,11 +54,12 @@ preview uses the production database.
 Two small tables are derived from `records` and have to be rebuilt after every import or correction of it. Both
 scripts replace the whole content and can be run again at any time.
 
-| Table     | Read by                                                                  | Rebuild                                     |
-| --------- | ------------------------------------------------------------------------ | ------------------------------------------- |
-| `volumes` | the coverage page (`/coverage`)                                          | `psql -v ON_ERROR_STOP=1 -f db/volumes.sql` |
-| `places`  | the map of search results (epic #42)                                     | `geo/build.sh`                              |
-| `streets` | street points on that map, for the towns in `geo/street_towns.txt` (#46) | `geo/build.sh` (same run)                   |
+| Table                                                                           | Read by                                                                  | Rebuild                                                                         |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `volumes`                                                                       | the coverage page (`/coverage`)                                          | `psql -v ON_ERROR_STOP=1 -f db/volumes.sql`                                     |
+| `places`                                                                        | the map of search results (epic #42)                                     | `geo/build.sh`                                                                  |
+| `streets`                                                                       | street points on that map, for the towns in `geo/street_towns.txt` (#46) | `geo/build.sh` (same run)                                                       |
+| columns `title`, `kind`, `alliance` of `records`, for volumes in the old format | the field search (wife's family name, second lines)                      | `psql -f db/subscriber_info.sql`, volume by volume on production (see the file) |
 
 `geo/build.sh` needs `psql` and `python3` (standard library only) and takes the connection from the usual `PG*`
 variables. It exports the locality strings per volume, resolves them to municipalities of today with

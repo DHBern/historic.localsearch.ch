@@ -116,7 +116,7 @@
 	"map_street_source": "Rues : répertoire officiel des rues, © swisstopo",
 	"search_fields_from_1938": "De 1938 à 1950, seules ces années sont pour l’instant consultables par champs : {years}. Les autres années ne sont accessibles que par la recherche en texte intégral.",
 	"search_fields_partly": "en partie",
-	"field_alliance": "Nom d’alliance (nom de l’épouse), dès 1938",
+	"field_alliance": "Nom d’alliance (nom de l’épouse)",
 	"field_kind": "Type d’inscription",
 	"kind_all": "tous",
 	"kind_person": "personne",
@@ -124,7 +124,7 @@
 	"kind_amt": "office",
 	"kind_zusatz": "ligne secondaire",
 	"field_nosub": "sans lignes secondaires (appartement, bureau)",
-	"field_new_note": "Le type, le titre et le nom d’alliance ne sont saisis que dans les volumes relus, dès 1938. Le filtre par type ne cherche que dans ces volumes.",
+	"field_new_note": "Dans les volumes anciens, le titre, les lignes secondaires et le nom d’alliance ont été tirés des champs imprimés selon des règles ; dans les volumes relus, dès 1938, ils ont été saisis à la lecture. Personne, entreprise et office ne sont distingués que dans les volumes relus : ce filtre ne cherche que dans ces volumes.",
 	"result_title": "Titre",
 	"result_alliance": "Nom d’alliance",
 	"result_kind": "Type"

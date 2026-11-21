@@ -199,3 +199,32 @@ test('the search can be limited to firms, and second lines can be left out', asy
 	await fieldSearch(page, async (p) => p.locator('input[name=nosub]').check());
 	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 18');
 });
+
+// The same three values for the older volumes, read from the printed fields by rule (#58, O-3).
+
+test("the wife's family name is found in the older volumes too", async ({ page }) => {
+	await openSearch(page);
+	await page.locator('input[name=to]').fill('1937');
+	await page.locator('input[name=alliance]').fill('Hodel');
+	await page.locator('input[name=entityname1]').fill('Buser');
+	await page.locator('input[name=entityname1]').press('Enter');
+	await expect(page.getByTestId('hit-count')).toBeVisible();
+	await expect(entries(page).first()).toContainText('Buser-Hodel');
+	await expect(page.getByTestId('alliance').first()).toContainText('Hodel');
+});
+
+test('second lines of the older volumes can be left out', async ({ page }) => {
+	const count = async (nosub: boolean) => {
+		await openSearch(page);
+		await page.locator('input[name=to]').fill('1937');
+		if (nosub) await page.locator('input[name=nosub]').check();
+		await page.locator('input[name=supplement]').fill('Wohn');
+		await page.locator('input[name=supplement]').press('Enter');
+		const status = page.getByTestId('hit-count').or(page.getByTestId('no-hits'));
+		await expect(status).toBeVisible();
+		return (await status.innerText()).replace(/\D/g, '');
+	};
+	const all = Number(await count(false));
+	expect(all).toBeGreaterThan(0);
+	expect(Number((await count(true)) || 0)).toBeLessThan(all);
+});

@@ -116,7 +116,7 @@
 	"map_street_source": "Vie: elenco ufficiale delle vie, © swisstopo",
 	"search_fields_from_1938": "Dal 1938 al 1950 solo questi anni sono per ora ricercabili per campi: {years}. Gli altri anni sono raggiungibili solo con la ricerca a testo integrale.",
 	"search_fields_partly": "in parte",
-	"field_alliance": "Cognome della moglie, dal 1938",
+	"field_alliance": "Cognome della moglie",
 	"field_kind": "Tipo di voce",
 	"kind_all": "tutti",
 	"kind_person": "persona",
@@ -124,7 +124,7 @@
 	"kind_amt": "ufficio",
 	"kind_zusatz": "riga secondaria",
 	"field_nosub": "senza righe secondarie (abitazione, ufficio)",
-	"field_new_note": "Tipo, titolo e cognome della moglie sono registrati solo nei volumi riletti, dal 1938. Il filtro per tipo cerca solo in questi volumi.",
+	"field_new_note": "Nei volumi più vecchi, titolo, righe secondarie e cognome della moglie sono stati ricavati dai campi stampati secondo regole; nei volumi riletti, dal 1938, sono stati registrati durante la lettura. Persona, ditta e ufficio sono distinti solo nei volumi riletti: questo filtro cerca solo in questi volumi.",
 	"result_title": "Titolo",
 	"result_alliance": "Cognome della moglie",
 	"result_kind": "Tipo"

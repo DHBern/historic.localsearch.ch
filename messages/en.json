@@ -117,7 +117,7 @@
 	"map_street_source": "Streets: official directory of streets, © swisstopo",
 	"search_fields_from_1938": "From 1938 to 1950 only these years can be searched by field so far: {years}. The other years can be found with the full-text search only.",
 	"search_fields_partly": "partly",
-	"field_alliance": "Wife’s family name, from 1938",
+	"field_alliance": "Wife’s family name",
 	"field_kind": "Kind of entry",
 	"kind_all": "all",
 	"kind_person": "person",
@@ -125,7 +125,7 @@
 	"kind_amt": "office",
 	"kind_zusatz": "second line",
 	"field_nosub": "without second lines (flat, office)",
-	"field_new_note": "Kind, title and wife’s family name exist only in the volumes read again, from 1938 on. Filtering by kind searches these volumes only.",
+	"field_new_note": "In the older volumes, title, second lines and the wife’s family name were read from the printed fields by rule; in the volumes read again, from 1938 on, they were recorded while reading. Person, firm and office are told apart only in the volumes read again: filtering by them searches these volumes only.",
 	"result_title": "Title",
 	"result_alliance": "Wife’s family name",
 	"result_kind": "Kind"

@@ -36,6 +36,37 @@ class Register(unittest.TestCase):
         for text in ("& Cie", "fils", "Söhne", "Hans", "Carouge"):
             self.assertEqual(match(text), [], text)
 
+    def test_a_family_name_is_no_occupation(self):
+        self.assertEqual(match("Müller"), ["mueller"])
+        self.assertEqual(match("Landw. u. Müller"), ["landwirt", "mueller"])
+        for text in ("A. Müller", "Müller & Co", "vorm. Müller C.", "Chalet Müller", "Huber-Müller", "Nachf. J. Maurer"):
+            self.assertEqual(match(text), [], text)
+        self.assertEqual(match("Coiffure pour dames et messieurs (Müller, R.)"), [])
+        self.assertEqual(match("J. Maurermeister"), ["baumeister"])
+        self.assertEqual(match("Wagnerei u. Sportgesch."), ["wagner"])
+
+    def test_words_that_only_look_like_an_occupation(self):
+        # check of 24.11.2026 on production
+        self.assertEqual(match("docteur, chem. du Mont-Blanc, 6"), ["arzt"])
+        self.assertEqual(match("Dr. chem."), ["chemiker"])
+        self.assertEqual(match("Färberei u. chem. Waschanstalt"), ["weberei", "waescherei"])
+        self.assertEqual(match("eidg. dipl. Zahnarzt"), ["zahnarzt"])
+        self.assertEqual(match("eidg. Beamter"), ["beamter"])
+        self.assertEqual(match("E. Fabrikvertreter Gummi-Prod. en gros"), ["vertreter"])
+        self.assertEqual(match("Fabrikant"), ["fabrikant"])
+        self.assertEqual(match("Stellvertreter"), [])
+        self.assertEqual(match("timbres-poste pr collect."), [])
+        self.assertEqual(match("Rest. z. Post"), ["gasthaus"])
+        self.assertEqual(match("Post u. Telegraph"), ["post"])
+        self.assertEqual(match("Dr. med., Röntgeninstitut"), ["arzt"])
+        self.assertEqual(match("Töchterinstitut"), ["schule"])
+        self.assertEqual(match("Vorsteher d. Schweiz. Volksbank, Agentur Seefeld"), ["bank", "agentur"])
+        self.assertEqual(match("Ortsvorsteher"), ["behoerde"])
+        self.assertEqual(match("Bücherrevisor"), ["angestellter"])
+        self.assertEqual(match("Textilwaren"), ["tuchhandlung"])
+        self.assertEqual(match("Drechsler"), ["drechsler"])
+        self.assertEqual(match("Küfer"), ["kuefer"])
+
     def test_the_register_is_well_formed(self):
         classes = {"medizin", "gast", "bank", "recht", "verkehr", "uhren", "textil", "lebensmittel", "bau", "industrie",
                    "druck", "bildung", "handwerk", "handel", "privat", "land"}

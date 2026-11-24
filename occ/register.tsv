@@ -15,7 +15,7 @@ konditor	beruf	lebensmittel	Konditor	confiseur	pasticciere	\b(k|c)onditor\b|conf
 konditorei	gewerbe	lebensmittel	Konditorei	confiserie	pasticceria	(k|c)onditorei|\bkondit\b|confiserie|patisserie|pasticceria|tea-room
 lebensmittelhandlung	gewerbe	lebensmittel	Lebensmittelhandlung	épicerie	negozio di alimentari	spezerei|(k|c)olonialw|epicerie|\bepic\b|\bepie\b|epicier|comestibles|commestibili|primeurs|lebensmittel|landesprod|denrees|alimentari|coloniali|konsum|consomm|cooperative|delikatessen|\bcomest\b|kuttlerei|milchprod\w*|comestible|traiteur|sudfruchte|obst u\. gemuse|getreide|\bfruits\b|legumes
 weinhandlung	gewerbe	lebensmittel	Weinhandlung	commerce de vins	commercio di vini	weinh(a|dl)|\bvins?\b|\bvini\b|spirituosen|liqueur|mineralwasser|eaux minerales
-mueller	beruf	lebensmittel	Müller	meunier	mugnaio	\bmuller\b|meunier|mugnaio
+mueller	beruf	lebensmittel	Müller	meunier	mugnaio	«\bmuller\b»|mullermeister|meunier|mugnaio
 muehle	gewerbe	lebensmittel	Mühle	moulin	mulino	\bmuhle\b|moulin|mulino|mullerei
 brauerei	gewerbe	lebensmittel	Brauerei, Mosterei	brasserie	birreria	brauerei|bierdepot|birreria|mosterei|cidrerie|brennerei|distillerie|liquoriste|distillateur
 wirt	beruf	gast	Wirt	aubergiste	oste	\b(gast)?wirt(in)?\b|aubergiste|cafetier|restaurateur\b|\boste\b|hotelier|albergatore|esercente|kuchenchef|\bkoch\b|cuisinier|\bcuoco\b|kellner\w*|portier|concierge d.hotel
@@ -30,11 +30,11 @@ pflege	beruf	medizin	Masseur, Pflegeberufe	masseur, soins	massaggiatore	masseu\w
 klinik	gewerbe	medizin	Spital, Klinik	hôpital, clinique	ospedale	spital|klinik|clinique|krankenhaus|sanatorium|ospedale|kinderheim|erholungsheim
 rechtsanwalt	beruf	recht	Rechtsanwalt	avocat	avvocato	rechtsanw\w*|advokat\w*|avocat|\bavoc\b|fursprech\w*|\bfurspr\b|avvocato|\bavv\b|en droit|jurist
 notar	beruf	recht	Notar	notaire	notaio	\bnotar\b|notaire|\bnot\b|notaio|notariat
-beamter	beruf	recht	Beamter, Verwaltungsangestellter	fonctionnaire	impiegato pubblico	\bbeamt(er|in)\b|eidg\. beamt|fonctionnaire|\bfonct\b|kanzlist|\bsekretar\b|secretaire|segretario|verwalter|\bgerant\b|kassier|caissier|sektionschef|inspektor|inspecteur|adjunkt|revisor|zollbeamt|douanier|\bsecret\b|\bverw\b|\bkant\. \w*beamt\w*|\beidg\b
-behoerde	beruf	recht	Behördenmitglied, Richter	magistrat	magistrato	gemeinde(ammann|prasident|pras|schreiber|rat|kassier)|syndic\b|sindaco|\bmaire\b|municipal|stadtrat|stadtammann|regierungsrat|reg\.-rat|oberrichter|friedensrichter|\w*richter\b|prasident|\bpras\b|vorsteher|\bjuge\b|gerichts\w*|nationalrat|grossrat|statthalter|prefet|landammann|ammann\b|gmde?(rat|schreiber|pras\w*|ammann)|stadt?rat\b|depute|conseiller
+beamter	beruf	recht	Beamter, Verwaltungsangestellter	fonctionnaire	impiegato pubblico	\bbeamt(er|in)\b|eidg\. beamt|fonctionnaire|\bfonct\b|kanzlist|\bsekretar\b|secretaire|segretario|verwalter|\bgerant\b|kassier|caissier|sektionschef|inspektor|inspecteur|adjunkt|(?<!bucher)(?<!bucher-)(?<!buchhalter-)revisor|zollbeamt|douanier|\bsecret\b|\bverw\b|\bkant\. \w*beamt\w*|\beidg\b(?!\. (dip|techn|feuerw))
+behoerde	beruf	recht	Behördenmitglied, Richter	magistrat	magistrato	gemeinde(ammann|prasident|pras|schreiber|rat|kassier)|syndic\b|sindaco|\bmaire\b|municipal|stadtrat|stadtammann|regierungsrat|reg\.-rat|oberrichter|friedensrichter|\w*richter\b|prasident|\bpras\b|(?<!agentur)vorsteher(?!\w* d\. [\w. ]*bank)|\bjuge\b|gerichts\w*|nationalrat|grossrat|statthalter|prefet|landammann|ammann\b|gmde?(rat|schreiber|pras\w*|ammann)|stadt?rat\b|depute|conseiller
 amt	gewerbe	recht	Amt, Verwaltung	office, administration	ufficio	gemeindekanzlei|kanzlei|verwaltung|sekretariat|direktion|grundbuch|betreibungs|zivilstand|rathaus|polizei\w*|gendarm\w*|landjager|\bpolice\b|zoll\w*|douane|kaserne|zeughaus
 offizier	beruf	recht	Offizier	officier	ufficiale	\boberst\w*|\bmajor\b|hauptmann|instruktions\w*|colonel|capitaine|leutnant
-post	gewerbe	verkehr	Post, Telegraph	poste, télégraphe	posta	\bpost\b|postbureau|poststelle|bureau des postes|telegraph\w*|\bposta\b|telephonzentrale|sprechstation|telephone publ|offentl\.? ?sprech ?stat\w*|\boffentl\b|\boff\. sprechstat\w*|station teleph\w*|station publique|telefono pubblico|postablage|\bposte\b|stazione telef\w*
+post	gewerbe	verkehr	Post, Telegraph	poste, télégraphe	posta	(?<!z\. )(?<!zur )(?<!zum )(?<!alte )(?<!alten )(?<!hotel )(?<!rest\. )(?<!restaurant )(?<!gasthaus )(?<!gasthof )(?<!wirtschaft )(?<!b\. d\. )\bpost\b(?! ?gebaude)|postbureau|poststelle|bureau des postes|telegraph\w*|\bposta\b|telephonzentrale|sprechstation|telephone publ|offentl\.? ?sprech ?stat\w*|\boffentl\b|\boff\. sprechstat\w*|station teleph\w*|station publique|telefono pubblico|postablage|(?<!de la )(?<!cafe )(?<!hotel )(?<!timbres-)(?<!avant-)(?<!r\. )(?<!rue )\bposte\b(?! de police)|stazione telef\w*
 postbeamter	beruf	verkehr	Post- und Telegraphenbeamter	employé postal	impiegato postale	posthalter|postverwalter|postbeamt\w*|facteur|brieftrager|buraliste|telegraphist|telephonist\w*|telephonmonteur|telephonbeamt\w*|postangest\w*|postgehilf\w*
 bahn	gewerbe	verkehr	Bahn, Station	gare, chemin de fer	stazione, ferrovia	stationsbur\w*|\bgare\b|(?<!rest\. )(?<!restaurant )(?<!hotel )(?<!buffet )(?<!cafe )bahnhof\b(?! ?(rest|buffet))|eisenbahn|\bsbb\b|\bcff\b|guterexpedition|tramway|strassenbahn|stazione|ferrovia|dampfschiff|schiffahrt
 bahnbeamter	beruf	verkehr	Bahnbeamter	employé de chemin de fer	ferroviere	bahnbeamt\w*|beamter sbb|stationsvorst\w*|chef de gare|lokomotivf\w*|kondukteur|zugfuhrer|bahnmeister|bahnwarter|ferroviere|capostazione|lok\.-fuhrer|lokfuhrer|weichenwarter|rangier\w*
@@ -46,11 +46,11 @@ uhrmacher	beruf	uhren	Uhrmacher	horloger	orologiaio	uhrmacher|horloger\b|\bhorlo
 uhren	gewerbe	uhren	Uhren, Bijouterie	horlogerie, bijouterie	orologeria	horlogerie|\buhren\b|montres|fabr\.? ?(d.)?horlog\w*|pierres fines|\bboites\b|cadrans|assortiments|bijouterie|orologeria|\bbijout\b
 goldschmied	beruf	handwerk	Goldschmied	bijoutier, orfèvre	orefice	goldschmied|bijoutier|orfevre|orefice|gioielliere
 stickerei	gewerbe	textil	Stickerei	broderie	ricami	stick(erei)?\b|schifflistick\w*|broderies?|ferggerei|ricami|sticker\b|brodeu\w*
-weberei	gewerbe	textil	Weberei, Spinnerei	tissage, filature	tessitura	weberei|tissage|zwirnerei|spinnerei|filature|seidenw\w*|tessitura|farberei|teinturerie|bleicherei|textil\w*|bandfabr\w*
-tuchhandlung	gewerbe	textil	Tuch- und Kleiderhandlung	tissus, confection	tessuti	tuchh\w*|tuchwaren|manufakturw\w*|mercerie|bonneterie|tissus|draperie|nouveautes|merceria|konfektion|confection|herrenkleider|damenkonfekt\w*|wasche\b|lingerie|chemiserie|corsets?|fourrures|pelzwaren|kurschner\w*|chapellerie|hutgesch\w*
+weberei	gewerbe	textil	Weberei, Spinnerei	tissage, filature	tessitura	weberei|tissage|zwirnerei|spinnerei|filature|seidenw\w*|tessitura|farberei|teinturerie|bleicherei|textil(industrie|fabr|werk|druck|gewebe|masch)\w*|bandfabr\w*
+tuchhandlung	gewerbe	textil	Tuch- und Kleiderhandlung	tissus, confection	tessuti	tuchh\w*|tuchwaren|manufakturw\w*|mercerie|bonneterie|tissus|draperie|nouveautes|merceria|konfektion|confection|herrenkleider|damenkonfekt\w*|wasche\b|lingerie|chemiserie|corsets?|fourrures|pelzwaren|kurschner\w*|chapellerie|hutgesch\w*|textil(waren|ien|es|haus|w)\b|tuch- u\. 
 architekt	beruf	bau	Architekt	architecte	architetto	\barch(it(ekt\w*|ecte|etto)?)?\b|architekturbureau
 ingenieur	beruf	bau	Ingenieur	ingénieur	ingegnere	ingenieur\w*|\bing(en|r)?\b|ingegnere|geometer|geometre|geometra
-baumeister	beruf	bau	Baumeister, Maurer	entrepreneur, maçon	impresario, muratore	baumeister|bauunternehmer|entrepreneur|\bentrepr\b|baufuhrer|impresario|capomastro|maurer(meister)?\b|\bmacon\b|muratore|bautechniker|polier|\bunternehmer\b|maurermstr|maconnerie|\bentrepren\b
+baumeister	beruf	bau	Baumeister, Maurer	entrepreneur, maçon	impresario, muratore	baumeister|bauunternehmer|entrepreneur|\bentrepr\b|baufuhrer|impresario|capomastro|«\bmaurer\b»|maurermeister|\bmacon\b|muratore|bautechniker|polier|\bunternehmer\b|maurermstr|maconnerie|\bentrepren\b
 baugeschaeft	gewerbe	bau	Baugeschäft	entreprise de construction	impresa di costruzioni	\bbaugesch\w*|bauunternehmung|hoch- u\. tiefbau|tiefbau|impresa|baumaterial\w*|materiaux de construction
 schreiner	beruf	bau	Schreiner	menuisier	falegname	\bschreiner(meister)?\b|menuisier|\bmenuis\b|ebeniste|falegname|tischler
 schreinerei	gewerbe	bau	Schreinerei, Möbel	menuiserie, meubles	falegnameria, mobili	schreinerei|menuiserie|mobel\w*|meubles|falegnameria|mobili\b
@@ -66,12 +66,12 @@ schlosserei	gewerbe	bau	Schlosserei	serrurerie	officina da fabbro	schlosserei|se
 hafner	beruf	bau	Hafner	poêlier	fumista	\bhafner(meister)?\b|ofenbau|poelier|fumista
 baustoffe	gewerbe	bau	Ziegelei, Zement	tuilerie, ciment	laterizi, cemento	ziegelei|tuilerie|zement\w*|\bciment\w*|kieswerk|steinbruch|carriere|marbrerie|steinhauer
 fabrikant	beruf	industrie	Fabrikant	fabricant, industriel	fabbricante	fabrikant|fabricant|industriel\b|fabbricante|industriale
-fabrik	gewerbe	industrie	Fabrik	fabrique, usine	fabbrica	fabrik\w*|fabrique|\bfabr\b|\busine\b|\bwerke?\b|fabbrica|giesserei|fonderie|manufaktur\b
+fabrik	gewerbe	industrie	Fabrik	fabrique, usine	fabbrica	fabrik(?!ant|vertret|arbeit|direkt)\w*|fabrique|\bfabr\b|\busine\b|\bwerke?\b|fabbrica|giesserei|fonderie|manufaktur\b
 mechaniker	beruf	industrie	Mechaniker, Monteur	mécanicien	meccanico	mechaniker|mecanicien|\bmecan\b|\bmech\b|meccanico|\bmonteur\b|chefmonteur|maschinist|maschinenmeister|automech\w*|konstrukteur
 werkstaette	gewerbe	industrie	mechanische Werkstätte, Maschinen	atelier mécanique	officina meccanica	mech\. werkst\w*|meeh\. werkst\w*|werkstatte|atelier mecan\w*|officina|maschinen\w*|machines
 elektriker	beruf	industrie	Elektriker	électricien	elettricista	elektriker|electricien|\belectr\b|elettricista|elektrotechn\w*|elektromont\w*|elektroinstall\w*
 elektro	gewerbe	industrie	Elektrogeschäft, Elektrizitätswerk	électricité	elettricità	elektr\. (anlagen|install\w*|unternehm\w*)|electricite|\bradio\b|elektrizitatsw\w*|elektrizitatsgesellsch\w*|kraftwerk|gaswerk|wasserwerk|usine electr\w*
-chemiker	beruf	industrie	Chemiker	chimiste	chimico	chemiker|chimiste|\bchem\b|chimico
+chemiker	beruf	industrie	Chemiker	chimiste	chimico	chemiker|chimiste|\bchem\b(?![. -]*(prod|techn|fabr|wasch|labor|reinig|werk|farb|du\b|des?\b|d\'))|chimico
 techniker	beruf	industrie	Techniker, Zeichner	technicien, dessinateur	tecnico, disegnatore	techniker|\btechn\b|technicien|tecnico|zeichner|dessinateur|disegnatore|\bbautechn\b
 direktor	beruf	industrie	Direktor, Betriebsleiter	directeur	direttore	direktor|\bdir\b|directeur|\bdirect\b|direttore|betriebsleiter|geschaftsfuhrer|werkmeister|werkfuhrer|chef d.atelier|contremaitre|vorarbeiter|\bdirekt\b
 drucker	beruf	druck	Buchdrucker, Buchbinder	imprimeur, relieur	tipografo	buchdrucker\b|imprimeur|tipografo|buchbinder\b|relieur|lithograph\b|schriftsetzer|typograph
@@ -81,7 +81,7 @@ zeitung	gewerbe	druck	Zeitung, Verlag	journal, éditeur	giornale	redaktion|zeitu
 buchhandlung	gewerbe	druck	Buchhandlung, Papeterie	librairie, papeterie	libreria, cartoleria	buchhandl\w*|librairie|libreria|papeterie|cartoleria
 photograph	beruf	druck	Photograph	photographe	fotografo	photogr\w*|fotograf\w*
 lehrer	beruf	bildung	Lehrer	instituteur, professeur	maestro, docente	\w*lehrer(in)?\b|instituteur|institutrice|\binstit\b|\bmaestr[oa]\b|professeur|\bprof\b|rektor|docente|schulvorsteher|schulinspektor|professor|kindergartnerin|erzieher\w*
-schule	gewerbe	bildung	Schule, Institut	école, institut	scuola, istituto	\bschule\b|schulhaus|\becole\b|gymnasium|seminar|institut\b|pensionnat|scuola|istituto|erziehungsanstalt|lehranstalt|kindergarten|college
+schule	gewerbe	bildung	Schule, Institut	école, institut	scuola, istituto	\bschule\b|schulhaus|\becole\b|gymnasium|seminar|(?<!reinigungs)(?<!reinigungs-)(?<!rontgen)(?<!rontgen-)(?<!massage-)(?<!fusspflege-)(?<!graph\. )(?<!optisches )(?<!zahnarztliches )(?<!physikalisches )institut\b(?! de beaute| f\. (korperpflege|heilgymnastik|physik))|pensionnat|scuola|istituto|erziehungsanstalt|lehranstalt|kindergarten|college
 pfarrer	beruf	bildung	Pfarrer, Geistlicher	pasteur, curé	parroco, pastore	pfarrer|\bpfr\b|pasteur|\bpast\b|\bcure\b|parroco|prediger|vikar|kaplan|\bpretre\b|\babbe\b|missionar|pfarramt|cure catholique|sacerdote
 kirche	gewerbe	bildung	Kirche, Kloster	église, couvent	chiesa, convento	kirchgemeinde|\bkirche\b|\beglise\b|kloster|couvent|chiesa|convento|pfarrhaus|presbytere
 musiker	beruf	bildung	Musiker, Musiklehrer	musicien	musicista	musiker|musikdir\w*|musicien|musiklehr\w*|klavierlehr\w*|organist|musicista|kapellmeister|geiger(in)?\b|violonist\w*
@@ -93,18 +93,20 @@ schneiderei	gewerbe	handwerk	Schneiderei, Modegeschäft	couture, modes	sartoria,
 schuhmacher	beruf	handwerk	Schuhmacher	cordonnier	calzolaio	schuhmacher\w*|cordonnier|calzolaio|schuster
 schuhgeschaeft	gewerbe	handel	Schuhgeschäft	chaussures	calzature	schuhh\w*|schuhgesch\w*|schuhhaus|schuhwaren|chaussures|calzature|\bchauss\b
 sattler	beruf	handwerk	Sattler, Tapezierer	sellier, tapissier	sellaio, tappezziere	sattler\w*|sellier|tapezier\w*|tapissier|sellaio|tappezziere|\btapez\b|seilerei|gerberei|seiler\b|gerber\b
-schmied	beruf	handwerk	Schmied	maréchal, forgeron	fabbro ferraio, maniscalco	(?<!gold)(?<!silber)schmied(e|meister)?\b|marechal|forgeron|maniscalco|mech\. schmiede|wagner(ei|meister)?\b|charron
+schmied	beruf	handwerk	Schmied	maréchal, forgeron	fabbro ferraio, maniscalco	(?<!gold)(?<!silber)schmied(e|meister)?\b|marechal|forgeron|maniscalco|mech\. schmiede
+wagner	beruf	handwerk	Wagner	charron	carradore	«\bwagner\b»|wagner(ei|meister)\b|\bwagner ei\b|charron|carradore
 kaminfeger	beruf	handwerk	Kaminfeger	ramoneur	spazzacamino	kaminfeger\w*|ramoneur|spazzacamino
 optiker	beruf	handwerk	Optiker	opticien	ottico	optiker|opticien|\bottico\b
-waescherei	gewerbe	handwerk	Wäscherei, Glätterei	blanchisserie	lavanderia	wascherei|glatterei|blanchiss\w*|lavanderia|repasseuse|glatterin|wascherin
-kuefer	beruf	handwerk	Küfer	tonnelier	bottaio	\bkufer\w*|tonnelier|bottaio|drechsler|tourneur|korbmacher|vannier|burstenmacher
+waescherei	gewerbe	handwerk	Wäscherei, Glätterei	blanchisserie	lavanderia	wascherei|glatterei|blanchiss\w*|lavanderia|repasseuse|glatterin|wascherin|waschanstalt|chem\. reinig\w*
+kuefer	beruf	handwerk	Küfer	tonnelier	bottaio	\bkufer\w*|tonnelier|bottaio|korbmacher|vannier|burstenmacher
+drechsler	beruf	handwerk	Drechsler	tourneur	tornitore	drechsler\w*|tourneur|tornitore
 kaufmann	beruf	handel	Kaufmann	négociant, commerçant	negoziante, commerciante	\bkfm\b|\bkaufm(ann)?\b|kaufleute|negociant|\bnegt?\b|\bnegoc\b|commercant|\bcommerc\b|negoziante|commerciante|handelsmann|\bhandler\b|\bmarchand\b|\bmd\b|\bnegte?\b|kaufra\b|negotiant|commerce de
-vertreter	beruf	handel	Vertreter, Reisender	représentant, voyageur	rappresentante	\bvertr(eter|etungen)?\b|represent\w*|\brepres\b|rappresent\w*|reisender|voyageur|\bagent\b|\bagente\b|generalagent|\brappr\b
+vertreter	beruf	handel	Vertreter, Reisender	représentant, voyageur	rappresentante	\bvertr\b|(?<!stell)vertret(er|ung|ungen|gn)\b|represent\w*|\brepres\b|rappresent\w*|reisender|voyageur|\bagent\b|\bagente\b|generalagent|\brappr\b
 agentur	gewerbe	handel	Agentur, Vertretungen	agence	agenzia	agentur(en)?\b|\bagence\b|agenzia|kommission\w*|import|export
-angestellter	beruf	handel	kaufmännischer Angestellter, Buchhalter, Prokurist	employé, comptable, fondé de pouvoir	impiegato, contabile	\bprok(urist)?\b|fonde de pouvoir|procuratore|buchhalter\w*|comptable|contabile|\bcommis\b|kaufm\. angest\w*|kfm\. angest\w*|angestellter|\bemploye\b|\bempl\b|impiegato|korrespondent|bureauchef|bureaulist\w*|burolist\w*|sekretarin|verkaufer\w*|\bangest\b|\bcompt\b|stenotyp\w*|dactylo\w*|bureauangest\w*|\bfde pouv\b
+angestellter	beruf	handel	kaufmännischer Angestellter, Buchhalter, Prokurist	employé, comptable, fondé de pouvoir	impiegato, contabile	\bprok(urist)?\b|fonde de pouvoir|procuratore|buchhalter\w*|comptable|contabile|\bcommis\b|kaufm\. angest\w*|kfm\. angest\w*|angestellter|\bemploye\b|\bempl\b|impiegato|korrespondent|bureauchef|bureaulist\w*|burolist\w*|sekretarin|verkaufer\w*|\bangest\b|\bcompt\b|stenotyp\w*|dactylo\w*|bureauangest\w*|\bfde pouv\b|bucher-?revisor\w*
 handlung	gewerbe	handel	Handlung, Laden	magasin	negozio	handlung|handlg\b|hdlg\b|handl\b|magasin|\bnegozio\b|bazar|kaufhaus|warenhaus|eisenh\w*|eisenwaren|quincaill\w*|cigar\w*|tabacs?\b|kiosk|kiosque|combust\w*|kohlen\w*|chiffons|glaswaren|porzellan|spielwaren|haushaltart\w*|photohaus|musikhaus|\bdepot\b|\bgeschaft\b|papierwaren|fournit\w*
 bankbeamter	beruf	bank	Bankbeamter, Bankier	employé de banque, banquier	bancario, banchiere	bankbeamt\w*|bankangest\w*|bankprok\w*|bankdirektor|bankkassier|banquier|bankier|employe de banque|banchiere|bancario
-bank	gewerbe	bank	Bank, Versicherung	banque, assurance	banca, assicurazione	\bbank\b|banque|\bbanca\b|sparkasse|kantonalbank|leihkasse|kreditanstalt|versicherung\w*|assurances?|assicuraz\w*|sparu\. leihkasse
+bank	gewerbe	bank	Bank, Versicherung	banque, assurance	banca, assicurazione	\bbank\b|(volks|national|hypothekar|handels|gewerbe|kredit|spar)bank|banque|\bbanca\b|sparkasse|kantonalbank|leihkasse|kreditanstalt|versicherung\w*|assurances?|assicuraz\w*|sparu\. leihkasse
 privatier	beruf	privat	Privatier, Rentner	rentier, propriétaire	possidente	privat(ier|iere)\b|rentier|rentiere|particul\w*|proprietaire|\bpropr\b|partikular|possidente|pensioniert|\bretraite\b|alt-\w+
 hauswart	beruf	handwerk	Hauswart, Abwart	concierge	portinaio	hauswart|abwart|\bconcierge\b|portinaio|hausmeister|schulabwart
 arbeiter	beruf	industrie	Arbeiter, Handlanger	ouvrier, manœuvre	operaio	\barbeiter\w*|handlanger|\bouvri\w*|manoeuvre|operaio|taglohner|fabrikarbeiter\w*|hilfsarbeiter

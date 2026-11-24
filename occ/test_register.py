@@ -67,6 +67,16 @@ class Register(unittest.TestCase):
         self.assertEqual(match("Drechsler"), ["drechsler"])
         self.assertEqual(match("Küfer"), ["kuefer"])
 
+    def test_a_public_call_station_is_no_post_office(self):
+        # decision of 24.11.2026: a call station is a telephone line, not a trade
+        for text in ("öffentl. Sprechstation", "öff. Sprechstat.", "Gemeindesprechstation", "öffentl.",
+                     "station publique", "stazione pubblica", "téléphone public"):
+            self.assertEqual(match(text), [], text)
+        self.assertEqual(match("Gemeindesprechstation, Wirt"), ["wirt"])
+        self.assertEqual(match("öffentl. Post u. Telegraph"), ["post"])
+        self.assertEqual(match("Telegr. öff. Sprechstat."), ["post"])
+        self.assertEqual(match("Postbureau"), ["post"])
+
     def test_the_register_is_well_formed(self):
         classes = {"medizin", "gast", "bank", "recht", "verkehr", "uhren", "textil", "lebensmittel", "bau", "industrie",
                    "druck", "bildung", "handwerk", "handel", "privat", "land"}

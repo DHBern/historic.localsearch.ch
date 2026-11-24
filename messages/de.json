@@ -127,5 +127,9 @@
 	"field_new_note": "Titel, Zweitzeilen und Allianzname sind in den älteren Bänden nach Regeln aus den gedruckten Feldern gelesen, in den neu gelesenen Bänden ab 1938 beim Lesen erfasst. Person, Firma und Amt werden nur in den neu gelesenen Bänden unterschieden: Wer danach filtert, sucht nur in diesen Bänden.",
 	"result_title": "Titel",
 	"result_alliance": "Allianzname",
-	"result_kind": "Art"
+	"result_kind": "Art",
+	"field_occupation": "Beruf oder Gewerbe aus der Liste",
+	"field_occupation_note": "Die Liste fasst Schreibweisen, Abkürzungen und Sprachen zusammen: «Landwirt» findet auch «Landw.», «agric.» und «agricoltore». Sie ist maschinell zugeordnet und erfasst etwa zwei Drittel der Einträge mit Berufsangabe; das Feld «Beruf» darüber sucht weiterhin im gedruckten Text.",
+	"field_occupation_unknown": "Bitte wählen Sie einen Beruf aus der Liste oder leeren Sie das Feld.",
+	"result_occupation": "Beruf/Gewerbe (normalisiert)"
 }

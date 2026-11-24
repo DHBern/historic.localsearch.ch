@@ -1,6 +1,6 @@
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
-import { places, records, streets, volumes } from '#lib/server/db/schema.ts';
+import { occupationRegister, places, records, streets, volumes } from '#lib/server/db/schema.ts';
 import { and, asc, between, count, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -181,6 +181,12 @@ function criteria(formData: FormData, withPlace: boolean) {
 			}
 			filters.push(contains(records[fieldName])(value));
 		}
+		// a normalised occupation or trade from the register (#58): every printed form of it
+		const occupation = text(formData.get('occupation'));
+		if (occupation !== '') {
+			if (!/^[a-z_]{2,40}$/.test(occupation)) return { error: 'invalid_occupation' as const };
+			filters.push(sql`${records.occupations} @> ARRAY[${occupation}]::text[]`);
+		}
 		if (filters.length === 0) {
 			return { error: 'no_criteria' as const };
 		}
@@ -225,6 +231,15 @@ function criteria(formData: FormData, withPlace: boolean) {
 	return { where, searchString };
 }
 
+/** The register of normalised occupations, for the suggestions in the form; empty if the table is missing. */
+async function occupationList() {
+	try {
+		return await getDb().select().from(occupationRegister).orderBy(asc(occupationRegister.de));
+	} catch {
+		return [];
+	}
+}
+
 /**
  * Which years from 1938 on can be searched by field: all their volumes, or only some (the others are still
  * text only). From the table `volumes`, so the form follows the imports by itself.
@@ -241,7 +256,9 @@ export const load: PageServerLoad = async () => {
 			.where(sql`${volumes.year} >= 1938`)
 			.groupBy(volumes.year)
 			.orderBy(asc(volumes.year));
+		const occupations = await occupationList();
 		return {
+			occupations,
 			fieldYears: {
 				full: rows.filter((r) => r.withFields === r.all).map((r) => r.year),
 				partial: rows.filter((r) => r.withFields > 0 && r.withFields < r.all).map((r) => r.year)
@@ -249,7 +266,7 @@ export const load: PageServerLoad = async () => {
 		};
 	} catch {
 		// no table, no database (preview builds): the form works without the note
-		return { fieldYears: null };
+		return { fieldYears: null, occupations: [] };
 	}
 };
 

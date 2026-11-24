@@ -127,5 +127,9 @@
 	"field_new_note": "Dans les volumes anciens, le titre, les lignes secondaires et le nom d’alliance ont été tirés des champs imprimés selon des règles ; dans les volumes relus, dès 1938, ils ont été saisis à la lecture. Personne, entreprise et office ne sont distingués que dans les volumes relus : ce filtre ne cherche que dans ces volumes.",
 	"result_title": "Titre",
 	"result_alliance": "Nom d’alliance",
-	"result_kind": "Type"
+	"result_kind": "Type",
+	"field_occupation": "Profession ou commerce de la liste",
+	"field_occupation_note": "La liste réunit graphies, abréviations et langues : « Landwirt » trouve aussi « Landw. », « agric. » et « agricoltore ». Elle est attribuée automatiquement et couvre environ deux tiers des inscriptions avec profession ; le champ « profession » ci-dessus cherche toujours dans le texte imprimé.",
+	"field_occupation_unknown": "Veuillez choisir une profession dans la liste ou vider le champ.",
+	"result_occupation": "Profession/commerce (normalisé)"
 }

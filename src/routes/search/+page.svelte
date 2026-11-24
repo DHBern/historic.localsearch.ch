@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as m from '#lib/paraglide/messages.js';
 	import { deserialize, enhance } from '$app/forms';
-	import { localizeHref } from '#lib/paraglide/runtime.js';
+	import { getLocale, localizeHref } from '#lib/paraglide/runtime.js';
 	import ResultMap, { type MapPlace, type MapStreet } from '#lib/ResultMap.svelte';
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
@@ -23,6 +23,7 @@
 				kind: string | null;
 				title: string | null;
 				alliance: string | null;
+				occupations: string[] | null;
 				entityname1: string | null;
 				entityname2: string | null;
 				locality: string | null;
@@ -49,6 +50,8 @@
 		}
 	};
 	const resetTopical = () => {
+		occupationText = '';
+		occupationUnknown = false;
 		Object.values(textfields).forEach((field) => {
 			if (field && field.name !== 'searchstring') {
 				field.value = '';
@@ -98,6 +101,22 @@
 	onMount(() => {
 		ready = true;
 	});
+	// the occupation register (#58): names in the language of the page (German where there is no other)
+	const occupationName = (o: { de: string; fr: string; it: string }) => {
+		const locale = getLocale();
+		return locale === 'fr' ? o.fr : locale === 'it' ? o.it : o.de;
+	};
+	const occupationById = $derived(new Map((data.occupations ?? []).map((o) => [o.id, o])));
+	const occupationByName = $derived(
+		new Map((data.occupations ?? []).map((o) => [occupationName(o).toLowerCase(), o.id]))
+	);
+	let occupationText = $state('');
+	let occupationUnknown = $state(false);
+	const occupationId = $derived(occupationByName.get(occupationText.trim().toLowerCase()) ?? '');
+	const occupationLabels = (ids: string[]) =>
+		ids
+			.map((id) => (occupationById.get(id) ? occupationName(occupationById.get(id)!) : id))
+			.join(', ');
 	const kindLabel = (kind: string) =>
 		({
 			person: m.kind_person(),
@@ -204,7 +223,13 @@
 	data-bg-color="white"
 	data-ready={ready}
 	bind:this={formElement}
-	use:enhance={({ formData }) => {
+	use:enhance={({ formData, cancel }) => {
+		// a text in the occupation field that is not in the list: say so instead of searching without it
+		occupationUnknown = occupationText.trim() !== '' && occupationId === '';
+		if (occupationUnknown && String(formData.get('searchstring') ?? '').trim() === '') {
+			cancel();
+			return;
+		}
 		// `formElement` is this `<form>` element
 		// `formData` is its `FormData` object that's about to be submitted
 		// `action` is the URL to which the form is posted
@@ -365,6 +390,30 @@
 			name="phonenumber"
 			placeholder={m.lavender_dim_shadow_hide()}
 		/>
+		<!-- a normalised occupation or trade from the register (#58) -->
+		<input
+			class="mt-4"
+			type="text"
+			list="occupation-list"
+			onfocus={resetFullText}
+			bind:value={occupationText}
+			maxlength="80"
+			autocomplete="off"
+			placeholder={m.field_occupation()}
+			data-testid="occupation"
+		/>
+		<input type="hidden" name="occupation" value={occupationId} />
+		<datalist id="occupation-list">
+			{#each data.occupations ?? [] as o (o.id)}
+				<option value={occupationName(o)}></option>
+			{/each}
+		</datalist>
+		{#if occupationUnknown}
+			<p class="w-[300px] pt-1 text-sm md:w-[370px]" role="alert" data-testid="occupation-unknown">
+				{m.field_occupation_unknown()}
+			</p>
+		{/if}
+		<p class="w-[300px] pt-2 text-sm md:w-[370px]">{m.field_occupation_note()}</p>
 		<!-- what the re-reading of 1938–1950 knows about an entry (#58) -->
 		<input
 			class="mt-4"
@@ -565,6 +614,12 @@
 							</p>
 						{/if}
 						<dl class="flex flex-wrap gap-2">
+							{#if result.occupations?.length}
+								<div data-testid="occupations">
+									<dt>{m.result_occupation()}</dt>
+									<dd>{occupationLabels(result.occupations)}</dd>
+								</div>
+							{/if}
 							{#if result.kind}
 								<div data-testid="kind-of-entry">
 									<dt>{m.result_kind()}</dt>

@@ -7,6 +7,9 @@ register.tsv has one row per normalised occupation (kind "beruf") or trade (kind
 16 coarse classes, the name in German, French and Italian, and a pattern of stems and abbreviations. Patterns are
 matched on the folded text (lower case, no accents: "Bäckerei" is written "backerei").
 
+A stem written between « and » is also a family name ("Müller", "Wagner", "Maurer"): it does not count where the
+text around it shows a name ("A. Müller", "vorm. Müller & Co", "Huber-Müller", "Chalet Müller").
+
 A supplement is cut at commas and semicolons. Parts that are an address, a note ("wenn keine Antwort ...") or the
 mark of a second line are skipped, so that "Bäckerstr. 12" is no baker. All occupations found are kept, in the
 order they stand in the text; the first is the main one.
@@ -14,10 +17,19 @@ order they stand in the text; the first is the main one.
 import csv, os, re, sys, unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-STREET = re.compile(r"(str\.|strasse|gasse\b|gassli|platz\b|weg\b|quai\b|\brue\b|\br\. ?[a-z]|\bav\.|\bavenue|\bch\. |\bchemin|\bbd\b|boulevard|\bpl\. |\brte\b|\bvia\b|\bpiazza|vorstadt|graben\b|rain\b|\bnr\.|\bno\.|\d+\s*$)")
+STREET = re.compile(r"(str\.|strasse|gasse\b|gassli|platz\b|weg\b|quai\b|\brue\b|\br\. ?[a-z]|\bav\.|\bavenue|\bch\. |\bchem\. ?(du|des?)\b|\bchemin|\bbd\b|boulevard|\bpl\. |\brte\b|\bvia\b|\bpiazza|vorstadt|graben\b|rain\b|\bnr\.|\bno\.|\d+\s*$)")
 FIRM = re.compile(r"(erei\b|erie\b|eria\b|geschaft|handlung|handlg|hdlg|fabrik|fabr\.|fabrique|magasin|a\.-?g\.|s\. ?a\.|& ?c(o|ie)|genossenschaft|societe|verein|gesellschaft|hotel|restaurant|gasthof|gasthaus|wirtschaft|pension|cafe|garage|bank|banque|apotheke|pharmacie|drogerie|salon|atelier|bureau|buro|institut|anstalt|verwaltung|kanzlei|depot|lager|agence|agentur|werkstatte|muhle|sagerei|brauerei)")
 NOTE = re.compile(r"(wenn keine antwort|si non reponse|se non risponde|\(\d|\d\.\d\d|\btel\b|siehe |voir |vedi )")
 SUBLINE = re.compile(r"^(wohn(g|ung)?|privat(wohnung)?|priv|appart(ement)?|app|domicile|dom|abitazione|abit)\.?$")
+
+
+# what shows that a word is a family name here: an initial, a firm or house word or a first name before it;
+# "& Co", "Fam.", a hyphen or a lone initial behind it
+NAME_BEFORE = ("(?<!\\b[a-tv-z]\\. )(?<!-)" + "".join(f"(?<!{w} )" for w in (
+    r"fa\.", "firma", r"vorm\.", "vormals", r"nachf\.", "nachfolger", "von", r"inh\.", r"gebr\.", "gebruder", "chalet", "villa",
+    "haus", "mme", "mlle", "frau", r"frl\.", "hans", "fritz", "karl", "ernst", "paul", r"aug\.", "emil", "otto", "jakob", "max")))
+NAME_AFTER = r"(?! ?&)(?!-\w)(?! fam\b)(?! [a-z]\.?$)(?! (hans|fritz|karl|ernst|paul|emil|otto|jakob|max)\b)"
+NAME_IN_BRACKETS = re.compile(r"\([a-z'\-]+, ?[a-z]\.?\)")     # "(Müller, R.)"
 
 
 def fold(s):
@@ -27,7 +39,7 @@ def fold(s):
 
 def load():
     rows = list(csv.DictReader(open(os.path.join(HERE, "register.tsv"), encoding="utf-8"), delimiter="\t", quoting=csv.QUOTE_NONE))
-    for r in rows: r["rx"] = re.compile(r["pattern"])
+    for r in rows: r["rx"] = re.compile(r["pattern"].replace("«", NAME_BEFORE).replace("»", NAME_AFTER))
     return rows
 
 
@@ -37,7 +49,7 @@ REG = load()
 def match(text):
     """Ids of the occupations and trades in a supplement, in the order they stand."""
     out = []; offset = 0
-    for part in re.split(r"[,;]", fold(text)):
+    for part in re.split(r"[,;]", NAME_IN_BRACKETS.sub(lambda m: " " * len(m.group()), fold(text))):
         p = part.strip(" .()")
         skip = not p or SUBLINE.match(p) or NOTE.search(p) or (STREET.search(p) and not FIRM.search(p))
         if not skip:

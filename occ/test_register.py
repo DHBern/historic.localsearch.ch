@@ -77,6 +77,19 @@ class Register(unittest.TestCase):
         self.assertEqual(match("Telegr. öff. Sprechstat."), ["post"])
         self.assertEqual(match("Postbureau"), ["post"])
 
+    def test_a_place_near_the_post_office_is_no_post_office(self):
+        # check of 24.11.2026 on production: where a shop is, or what an inn is called
+        self.assertEqual(match("Handels-Gärtnerei, Blumenmagazin, vis-à-vis der Post"), ["gaertnerei"])
+        self.assertEqual(match("Apotheker, bei d. Post"), ["apotheker"])
+        self.assertEqual(match("Bäckerei, neben der Post"), ["baeckerei"])
+        self.assertEqual(match("Café Post"), ["gasthaus"])
+        self.assertEqual(match("caffè ristorante della Posta"), ["gasthaus"])
+        for text in ("abitazione, v. della Posta", "(atrio posta)", "frühere Post", "(anc. Poste)", "cpl. poste perm."):
+            self.assertEqual(match(text), [], text)
+        for text in ("Post", "Öffentl. Post", "Telegraph u. Post", "poste", "Posta", "bureau de poste",
+                     "mastro di posta", "Abwart bei der Post-Verw."):
+            self.assertIn("post", match(text), text)
+
     def test_the_register_is_well_formed(self):
         classes = {"medizin", "gast", "bank", "recht", "verkehr", "uhren", "textil", "lebensmittel", "bau", "industrie",
                    "druck", "bildung", "handwerk", "handel", "privat", "land"}

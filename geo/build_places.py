@@ -69,7 +69,11 @@ class Resolver:
         if far <= SAME_KM:
             k = key(name)
             own = [c for c in cs if key(re.sub(r"\s*\([A-Z]{2}\)$", "", self.mun.get(c["bfs_today"].split(";")[0], ("",))[0])) == k]
-            return (own or sorted(cs, key=lambda c: (c["kind"] != "gemeinde_1914", -c["plz"], -c.get("share", 0))))[0], how
+            order = lambda c: (c["kind"] != "gemeinde_1914", -c["plz"], -c.get("share", 0))
+            # two municipalities of today carry the name: the one that had it in 1914 ("Erlinsbach" is the one in
+            # Aargau; the villages across the border were Nieder- and Obererlinsbach)
+            if len({c["bfs_today"].split(";")[0] for c in own}) > 1: own = sorted(own, key=order)
+            return (own or sorted(cs, key=order))[0], how
         by = {}
         for c in cs: by.setdefault(c["bfs_today"].split(";")[0], c)
         ranked = sorted(by.values(), key=lambda c: -c["plz"])

@@ -21,6 +21,10 @@ class Places(unittest.TestCase):
         self.assertEqual(where("Buchs St. G.")[1], "SG")
         self.assertEqual(where("Teufen Appenzell")[1], "AR")
         self.assertEqual(where("Haslen, App. I.-Rh. (Teufen)")[1], "AI")
+        # the abbreviations of the volumes of 1938-1950
+        self.assertEqual(where("Lachen Schw")[:2], ("Lachen", "SZ"))
+        self.assertEqual(where("Oberwil Bld")[:2], ("Oberwil (BL)", "BL"))
+        self.assertEqual(where("Altdorf Uri")[:2], ("Altdorf (UR)", "UR"))
 
     def test_exchange_picks_the_near_place(self):
         self.assertEqual(where("Trimstein, Netz Worb"), ("Münsingen", "BE", "name+exchange"))
@@ -34,6 +38,16 @@ class Places(unittest.TestCase):
 
     def test_one_town_over_two_municipalities_is_one_place(self):
         self.assertEqual(where("Olten")[:2], ("Olten", "SO"))
+        # a postcode area over several municipalities: the one that holds most of it
+        self.assertEqual(where("Corcelles Ntel")[:2], ("Neuchâtel", "NE"))
+        self.assertEqual(where("Gümligen")[:2], ("Muri bei Bern", "BE"))
+        self.assertEqual(where("Glattbrugg")[:2], ("Opfikon", "ZH"))
+
+    def test_places_known_only_with_their_canton(self):
+        self.assertEqual(where("St-Aubin Ntel")[:2], ("La Grande Béroche", "NE"))
+        self.assertEqual(where("Bémont Ntel")[:2], ("La Brévine", "NE"))
+        self.assertEqual(where("St-Martin Ntel")[:2], ("Val-de-Ruz", "NE"))
+        self.assertEqual(where("St-Aubin")[2], "ambiguous")           # Fribourg or Neuchâtel
 
     def test_no_guessing(self):
         self.assertEqual(where("Kilchberg")[2], "ambiguous")          # Baselland or Zürich: the volume decides

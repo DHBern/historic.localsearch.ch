@@ -36,6 +36,8 @@ CANTON_HINTS = {
     "solothurn": "SO", "freiburg": "FR", "thurgau": "TG", "wallis": "VS", "gl": "GL", "glarus": "GL", "sh": "SH", "schaffh": "SH", "zg": "ZG", "zug": "ZG",
     "sz": "SZ", "schwyz": "SZ", "ow": "OW", "nw": "NW", "ur": "UR", "app": "AR", "ap": "AR",
     "ar": "AR", "ai": "AI", "ge": "GE", "geneve": "GE",
+    # as printed in the volumes of 1938-1950: "Lachen Schw", "Corcelles Ntel", "Oberwil Bld", "Altdorf Uri"
+    "schw": "SZ", "ntel": "NE", "bld": "BL", "uri": "UR",
 }
 OCR_FIXES = [
     (re.compile(r"^Ea\b"), "La"), (re.compile(r"^JX"), "N"), (re.compile(r"\b8t\."), "St."),
@@ -95,7 +97,7 @@ class Gazetteer:
             self.cands[key(base)].append({
                 "kind": "ortschaft", "name": base, "canton": r["canton"], "bfs_today": r["bfs_today"],
                 "hist_code": "", "municipality_1914": "", "lat": float(r["lat"]), "lon": float(r["lon"]),
-                "plz": 1,
+                "plz": 1, "share": share,
             })
         for m in open_csv(REF / "municipalities_1914.csv"):
             name = re.sub(r"\s*\([A-Z]{2}\)$", "", m["name"])     # «Biel (BE)» → Biel

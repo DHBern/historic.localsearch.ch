@@ -69,7 +69,7 @@ class Resolver:
         if far <= SAME_KM:
             k = key(name)
             own = [c for c in cs if key(re.sub(r"\s*\([A-Z]{2}\)$", "", self.mun.get(c["bfs_today"].split(";")[0], ("",))[0])) == k]
-            return (own or sorted(cs, key=lambda c: (c["kind"] != "gemeinde_1914", -c["plz"])))[0], how
+            return (own or sorted(cs, key=lambda c: (c["kind"] != "gemeinde_1914", -c["plz"], -c.get("share", 0))))[0], how
         by = {}
         for c in cs: by.setdefault(c["bfs_today"].split(";")[0], c)
         ranked = sorted(by.values(), key=lambda c: -c["plz"])

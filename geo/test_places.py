@@ -63,6 +63,12 @@ class Places(unittest.TestCase):
         self.assertEqual(where("St. Margarethen (Münchwilen, Th.)")[:2], ("Münchwilen (TG)", "TG"))
         self.assertEqual(where("Eriswil (Huttwil)")[:2], ("Eriswil", "BE"))
 
+    def test_two_municipalities_of_one_name_side_by_side(self):
+        # Erlinsbach AG and Erlinsbach SO (until 2005 Nieder- and Obererlinsbach) touch each other
+        self.assertEqual(where("Erlinsbach")[:2], ("Erlinsbach (AG)", "AG"))
+        self.assertEqual(where("Erlinsbach (Aarau)")[:2], ("Erlinsbach (AG)", "AG"))
+        self.assertEqual(where("Niedererlinsbach (Aarau)")[:2], ("Erlinsbach (SO)", "SO"))
+
     def test_no_guessing(self):
         self.assertEqual(where("Kilchberg")[2], "ambiguous")          # Baselland or Zürich: the volume decides
         self.assertEqual(where("Fernkennzahl")[2], "unknown")

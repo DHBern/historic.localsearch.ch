@@ -102,6 +102,9 @@ class Resolver:
         if app: s = s[:app.start()] + s[app.end():]
         name, hint, paren = split_locality(s)
         if app: hint = "A" + app.group(1)
+        # "Wald (Zch.)": an abbreviation is the canton, no exchange; "Littau (Luzern)" is the exchange in the town
+        if not hint and paren.endswith(".") and key(paren) in _places.CANTON_HINTS and len(paren) <= 10:
+            hint, paren = _places.CANTON_HINTS[key(paren)], ""
         exch = exch or paren
         exch = re.sub(r"\b0\d\d\b|\(|\)", "", exch).strip()
         full, fhow = self.cands(re.sub(r"\s*\(.*$", "", s).strip(" ,."))   # "Muri b. Bern" as a whole before taking it apart
@@ -114,6 +117,11 @@ class Resolver:
         if full and (not cs or key(name) != key(s)) and self.pick(full, fhow, s)[0]: cs, how, hint = full, fhow, ""
         exch = re.sub(r"\b0\d\d\b|\(|\)", "", exch).strip()
         ex, _ = self.town(split_locality(exch)[0]) if exch else (None, "")
+        if exch and not ex and "," in exch:              # "Fresens (St-Aubin, N.)": the canton tells the exchanges apart
+            en, eh, _ = split_locality(exch)
+            ecs, ehow = self.cands(en)
+            ecs = [c for c in ecs if c["canton"] == eh] if eh else []
+            if ecs: ex = self.pick(ecs, ehow, en)[0]
         if not cs:
             if ex: return ex, "exchange-only"        # hamlet unknown: the entry is shown at its exchange
             return None, "unknown"
@@ -123,7 +131,10 @@ class Resolver:
         if ex:
             near = sorted(cs, key=lambda c: dist_km(c, (ex["lat"], ex["lon"])))
             lim = NEAR_KM if how.startswith("name") and not how.startswith("namens") else FUZZY_KM
-            if dist_km(near[0], (ex["lat"], ex["lon"])) <= lim: return near[0], how + "+exchange"
+            if dist_km(near[0], (ex["lat"], ex["lon"])) <= lim:
+                # the rows of one postcode area over several municipalities are one place: not the nearest sliver
+                same = [c for c in cs if dist_km(c, (near[0]["lat"], near[0]["lon"])) <= SAME_KM]
+                return (self.pick(same, how, name)[0] or near[0]), how + "+exchange"
             return ex, "exchange-only"
         return self.pick(cs, how, name)
 

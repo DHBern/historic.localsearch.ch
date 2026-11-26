@@ -49,6 +49,20 @@ class Places(unittest.TestCase):
         self.assertEqual(where("St-Martin Ntel")[:2], ("Val-de-Ruz", "NE"))
         self.assertEqual(where("St-Aubin")[2], "ambiguous")           # Fribourg or Neuchâtel
 
+    def test_the_exchange_with_its_canton(self):
+        # two exchanges of one name: the canton printed with it decides
+        self.assertEqual(where("Fresens (St-Aubin, N.)")[:2], ("La Grande Béroche", "NE"))
+        self.assertEqual(where("Dreibrunnen (Wil, St. G.)"), ("Wil (SG)", "SG", "exchange-only"))
+        # an abbreviation in brackets is the canton, a town in brackets is the exchange
+        self.assertEqual(where("Wald (Zch.)")[:2], ("Wald (ZH)", "ZH"))
+        self.assertEqual(where("Littau (Luzern)")[:2], ("Luzern", "LU"))
+        self.assertEqual(where("Hilterfingen (Oberhofen a. Th.)")[:2], ("Hilterfingen", "BE"))   # am Thunersee, not Thurgau
+
+    def test_near_the_exchange_is_not_the_nearest_sliver(self):
+        self.assertEqual(where("Ostermundigen (Bern)")[:2], ("Ostermundigen", "BE"))
+        self.assertEqual(where("St. Margarethen (Münchwilen, Th.)")[:2], ("Münchwilen (TG)", "TG"))
+        self.assertEqual(where("Eriswil (Huttwil)")[:2], ("Eriswil", "BE"))
+
     def test_no_guessing(self):
         self.assertEqual(where("Kilchberg")[2], "ambiguous")          # Baselland or Zürich: the volume decides
         self.assertEqual(where("Fernkennzahl")[2], "unknown")

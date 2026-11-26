@@ -26,6 +26,27 @@ class Places(unittest.TestCase):
         self.assertEqual(where("Oberwil Bld")[:2], ("Oberwil (BL)", "BL"))
         self.assertEqual(where("Altdorf Uri")[:2], ("Altdorf (UR)", "UR"))
 
+    def test_bei_names_the_town_nearby(self):
+        self.assertEqual(where("Lengnau b. Biel")[:2], ("Lengnau (BE)", "BE"))
+        self.assertEqual(where("Rohrbach b. Huttwil")[:2], ("Rohrbach", "BE"))
+        self.assertEqual(where("Staad bei Rorschach")[:2], ("Thal", "SG"))
+        self.assertEqual(where("Muri b. Bern"), ("Muri bei Bern", "BE", "name"))          # a name of its own
+        self.assertEqual(where("Papiermühle b. Bern")[2], "unknown")                      # not shown in Bern
+
+    def test_spelling_as_printed(self):
+        self.assertEqual(where("Brugg")[:2], ("Brugg", "AG"))
+        self.assertEqual(where("Brügg")[:2], ("Brügg", "BE"))
+        self.assertEqual(where("Aegerten Netz Brugg")[:2], ("Aegerten", "BE"))            # the exchange is Brügg
+        self.assertEqual(where("St-Aubin")[2], "ambiguous")
+
+    def test_edge_of_a_postcode_area_is_no_second_place(self):
+        self.assertEqual(where("Engelberg")[:2], ("Engelberg", "OW"))
+        self.assertEqual(where("Urnäsch")[:2], ("Urnäsch", "AR"))
+        self.assertEqual(where("Teufen")[2], "ambiguous")                                 # Appenzell or Zürich
+        self.assertEqual(where("Altdorf")[:2], ("Altdorf (UR)", "UR"))
+        self.assertEqual(where("Altdorf (Schaffh.)")[1], "SH")
+        self.assertEqual(where("Bürglen, U. (Altdorf)")[:2], ("Bürglen (UR)", "UR"))
+
     def test_exchange_picks_the_near_place(self):
         self.assertEqual(where("Trimstein, Netz Worb"), ("Münsingen", "BE", "name+exchange"))
         # the hamlet is not in the register: shown at its exchange

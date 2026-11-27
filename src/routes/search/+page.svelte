@@ -15,9 +15,10 @@
 	type Entry = NonNullable<NonNullable<ActionData>['results']>[number] & { similarity?: number };
 	// the list on screen: under a heading per year when it is ordered by year, else one run of entries (#23)
 	const listSort = $derived(form?.sort ?? 'year');
-	let visibleResults = $derived.by(() => {
-		const groups: { year: number | null; entries: Entry[] }[] = [];
-		const displayItems = form?.results?.slice(0, showresults) ?? [];
+	type Group = { year: number | null; entries: Entry[] };
+	let visibleResults = $derived.by((): Group[] => {
+		const groups: Group[] = [];
+		const displayItems: Entry[] = form?.results?.slice(0, showresults) ?? [];
 		if (listSort !== 'year')
 			return displayItems.length ? [{ year: null, entries: displayItems }] : [];
 		displayItems.forEach((entry) => {

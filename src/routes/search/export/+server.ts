@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
 import { records } from '#lib/server/db/schema.ts';
-import { asc, getTableColumns, sql } from 'drizzle-orm';
+import { getTableColumns, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { EXPORT_MAX, csvLine, exportFileName, scanId } from '#lib/search.ts';
 import { approxSetup, criteria } from '#lib/server/criteria.ts';
@@ -30,7 +30,7 @@ const HEADER = [
 ];
 
 /**
- * The hits of a search as CSV (#28): the same form as the search, all hits up to EXPORT_MAX, oldest first, with
+ * The hits of a search as CSV (#28): the same form as the search, all hits up to EXPORT_MAX in the order of the list, with
  * the volume, the page and the address of the page image.
  */
 export const POST: RequestHandler = async ({ request }) => {
@@ -49,7 +49,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				})
 				.from(records)
 				.where(found.where)
-				.orderBy(asc(records.year), asc(records.file), asc(records.page))
+				.orderBy(...found.order)
 				.limit(EXPORT_MAX + 1);
 		});
 	} catch (e) {

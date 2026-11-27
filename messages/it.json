@@ -141,5 +141,19 @@
 	"search_mode_note": "«Approssimativa» trova anche parole scritte in modo simile, ad esempio errori di lettura del riconoscimento del testo («Hodei» per «Hodel»). Il termine deve avere almeno 4 caratteri.",
 	"result_similarity": "Somiglianza",
 	"approx_too_short": "Per la ricerca approssimativa inserite almeno 4 caratteri.",
-	"approx_too_broad": "La ricerca approssimativa ha richiesto troppo tempo per questa parola. Restringete gli anni o cercate in modo esatto."
+	"approx_too_broad": "La ricerca approssimativa ha richiesto troppo tempo per questa parola. Restringete gli anni o cercate in modo esatto.",
+	"field_book": "Elenco",
+	"field_book_all": "tutti gli elenchi",
+	"book_info_label": "Che cos’è un elenco?",
+	"book_info": "Fino al 1910 ogni rete telefonica aveva il proprio elenco (Basilea, Berna, Zurigo …). Dal 1911 la Svizzera esce in tre volumi all’anno: 1 Svizzera occidentale, 2 centro e Ticino, 3 Svizzera orientale; alcuni anni dividono un volume in a e b. Un elenco per due reti («Bern / Val-de-Travers») vale per entrambe.",
+	"book_unknown": "Questo elenco non esiste. Sceglierne uno dalla lista o svuotare il campo.",
+	"book_volume": "Volume {n}",
+	"book_region_1": "Svizzera occidentale",
+	"book_region_2": "Berna, Basilea, Argovia, Svizzera centrale, Ticino",
+	"book_region_3": "Zurigo, Svizzera orientale, Grigioni",
+	"sort_label": "Ordine",
+	"sort_year": "per anno",
+	"sort_name": "per nome",
+	"sort_locality": "per località",
+	"result_year": "Anno"
 }

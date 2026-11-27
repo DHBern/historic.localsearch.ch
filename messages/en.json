@@ -142,5 +142,19 @@
 	"search_mode_note": "“Approximate” also finds words spelled alike, such as misreadings of the text recognition (“Hodei” for “Hodel”). The term needs at least 4 characters.",
 	"result_similarity": "Similarity",
 	"approx_too_short": "Please enter at least 4 characters for the approximate search.",
-	"approx_too_broad": "The approximate search took too long for this word. Please narrow the years or search exactly."
+	"approx_too_broad": "The approximate search took too long for this word. Please narrow the years or search exactly.",
+	"field_book": "Book",
+	"field_book_all": "all books",
+	"book_info_label": "What is a book?",
+	"book_info": "Until 1910 every telephone network had its own book (Basel, Bern, Zürich …). From 1911 Switzerland is printed in three volumes per year: 1 west, 2 centre and Ticino, 3 east; some years split a volume into a and b. A book for two networks (\"Bern / Val-de-Travers\") counts for both.",
+	"book_unknown": "There is no such book. Please choose one from the list or clear the field.",
+	"book_volume": "Volume {n}",
+	"book_region_1": "western Switzerland",
+	"book_region_2": "Bern, Basel, Aargau, central Switzerland, Ticino",
+	"book_region_3": "Zürich, eastern Switzerland, Graubünden",
+	"sort_label": "Order",
+	"sort_year": "by year",
+	"sort_name": "by name",
+	"sort_locality": "by place",
+	"result_year": "Year"
 }

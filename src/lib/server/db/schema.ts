@@ -1,4 +1,13 @@
-import { pgTable, index, text, integer, timestamp, real, primaryKey } from 'drizzle-orm/pg-core';
+import {
+	bigint,
+	index,
+	integer,
+	pgTable,
+	primaryKey,
+	real,
+	text,
+	timestamp
+} from 'drizzle-orm/pg-core';
 
 export const records = pgTable(
 	'records',
@@ -84,6 +93,25 @@ export const volumes = pgTable('volumes', {
 	places: text().notNull(),
 	updated: timestamp({ withTimezone: true }).notNull()
 });
+
+/** The books a search can be limited to, filled by db/books.sql after db/volumes.sql (#50). */
+export const books = pgTable('books', {
+	book: text().primaryKey(),
+	// 'network': one book per telephone network (until 1910); 'volume': a regional volume (from 1911)
+	kind: text().notNull(),
+	firstYear: integer('first_year').notNull(),
+	lastYear: integer('last_year').notNull(),
+	years: text().notNull(),
+	volumes: integer().notNull(),
+	entries: bigint({ mode: 'number' }).notNull()
+});
+
+/** Which volumes belong to a book; a volume of two networks belongs to both. */
+export const bookFiles = pgTable(
+	'book_files',
+	{ book: text().notNull(), file: text().notNull() },
+	(table) => [primaryKey({ columns: [table.book, table.file] })]
+);
 
 /** Where a locality string of a volume is: filled by geo/build.sh after every import (#43). */
 export const places = pgTable(

@@ -1,6 +1,6 @@
 // The conditions of a search, shared by the result list, the map and the export (#28).
-import { places, placesNet, records } from '#lib/server/db/schema.ts';
-import { and, between, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
+import { bookFiles, places, placesNet, records } from '#lib/server/db/schema.ts';
+import { and, asc, between, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { MAX_LENGTH, MIN_LENGTH, escapeLike } from '#lib/search.ts';
 
@@ -18,6 +18,26 @@ const fieldNames = [
 ] as const;
 // the kinds of entry the re-reading tells apart (#58); older volumes have none
 const kinds = ['person', 'firma', 'amt'] as const;
+
+// the order of the list (#23): oldest first, or by name, or by place; entries without the field come last
+const orders = {
+	year: [asc(records.year), asc(records.file), asc(records.page)],
+	name: [
+		sql`${records.entityname1} asc nulls last`,
+		sql`${records.entityname2} asc nulls last`,
+		asc(records.year),
+		asc(records.file),
+		asc(records.page)
+	],
+	locality: [
+		sql`${records.locality} asc nulls last`,
+		sql`${records.entityname1} asc nulls last`,
+		asc(records.year),
+		asc(records.file),
+		asc(records.page)
+	]
+};
+export type SortOrder = keyof typeof orders;
 
 const termSchema = z.string().min(MIN_LENGTH).max(MAX_LENGTH);
 const yearSchema = z.number().int().min(FIRST_YEAR).max(LAST_YEAR);
@@ -127,6 +147,19 @@ export function criteria(formData: FormData, withPlace: boolean) {
 			between(records.year, from, to)
 		);
 	}
+	// limit to a book (#50): the volumes of one network until 1910, or a regional volume from 1911. A name the
+	// table does not have finds nothing.
+	const book = text(formData.get('book'));
+	if (book !== '') {
+		if (book.length > 40) return { error: 'invalid_book' as const };
+		where = and(
+			where,
+			sql`${records.file} in (select ${bookFiles.file} from ${bookFiles} where ${bookFiles.book} = ${book})`
+		);
+	}
+	const sort = text(formData.get('sort')) || 'year';
+	if (!Object.hasOwn(orders, sort)) return { error: 'invalid_sort' as const };
+	const order = orders[sort as SortOrder];
 	// a click on the map narrows the list to one municipality of today (#45); the map itself is not narrowed
 	const place = text(formData.get('place'));
 	if (withPlace && place !== '') {
@@ -142,5 +175,5 @@ export function criteria(formData: FormData, withPlace: boolean) {
 	const similarity = approx
 		? sql<number>`least(${sql.join(scores, sql`, `)})`.mapWith(Number)
 		: undefined;
-	return { where, searchString, approx, similarity };
+	return { where, searchString, approx, similarity, order, sort: sort as SortOrder };
 }

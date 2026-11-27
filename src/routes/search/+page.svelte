@@ -11,39 +11,21 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let showresults = $state(20);
+	type Entry = NonNullable<NonNullable<ActionData>['results']>[number];
+	// the list on screen: under a heading per year when it is ordered by year, else one run of entries (#23)
+	const listSort = $derived(form?.sort ?? 'year');
 	let visibleResults = $derived.by(() => {
-		let sorted: Record<
-			number,
-			{
-				year: number | null;
-				page: number | null;
-				file: string | null;
-				aggregatedcontent: string | null;
-				network: string | null;
-				kind: string | null;
-				title: string | null;
-				alliance: string | null;
-				occupations: string[] | null;
-				entityname1: string | null;
-				entityname2: string | null;
-				locality: string | null;
-				phonenumber: string | null;
-				street: string | null;
-				supplement: string | null;
-				similarity?: number;
-			}[]
-		> = {};
-		const displayItems = form?.results?.slice(0, showresults);
-		displayItems?.forEach((entry) => {
-			if (entry.year !== null) {
-				if (sorted[entry.year]) {
-					sorted[entry.year].push(entry);
-				} else {
-					sorted[entry.year] = [entry];
-				}
-			}
+		const groups: { year: number | null; entries: Entry[] }[] = [];
+		const displayItems = form?.results?.slice(0, showresults) ?? [];
+		if (listSort !== 'year')
+			return displayItems.length ? [{ year: null, entries: displayItems }] : [];
+		displayItems.forEach((entry) => {
+			if (entry.year === null) return;
+			const last = groups.at(-1);
+			if (last && last.year === entry.year) last.entries.push(entry);
+			else groups.push({ year: entry.year, entries: [entry] });
 		});
-		return sorted;
+		return groups;
 	});
 	const resetFullText = () => {
 		if (textfields?.searchstring) {
@@ -118,6 +100,29 @@
 	let occupationText = $state('');
 	let occupationUnknown = $state(false);
 	const occupationId = $derived(occupationByName.get(occupationText.trim().toLowerCase()) ?? '');
+	// the books a search can be limited to (#50): one per network until 1910, the regional volumes from 1911
+	const bookLabel = (b: {
+		book: string;
+		kind: string;
+		years: string;
+		firstYear: number;
+		lastYear: number;
+	}) => {
+		if (b.kind !== 'volume') {
+			return `${b.book} (${b.firstYear === b.lastYear ? b.firstYear : `${b.firstYear}–${b.lastYear}`})`;
+		}
+		const region = { '1': m.book_region_1(), '2': m.book_region_2(), '3': m.book_region_3() }[
+			b.book
+		];
+		return `${m.book_volume({ n: b.book })}${region ? `: ${region}` : ''} (${b.years})`;
+	};
+	const bookByLabel = $derived(
+		new Map((data.books ?? []).map((b) => [bookLabel(b).toLowerCase(), b.book]))
+	);
+	let bookText = $state('');
+	let bookUnknown = $state(false);
+	let bookInfoOpen = $state(false);
+	const bookId = $derived(bookByLabel.get(bookText.trim().toLowerCase()) ?? '');
 	const occupationLabels = (ids: string[]) =>
 		ids
 			.map((id) => (occupationById.get(id) ? occupationName(occupationById.get(id)!) : id))
@@ -266,6 +271,12 @@
 			cancel();
 			return;
 		}
+		// the same for a book that is not in the list
+		bookUnknown = bookText.trim() !== '' && bookId === '';
+		if (bookUnknown) {
+			cancel();
+			return;
+		}
 		// `formElement` is this `<form>` element
 		// `formData` is its `FormData` object that's about to be submitted
 		// `action` is the URL to which the form is posted
@@ -338,6 +349,59 @@
 				</select>
 			</label>
 			<p class="pt-2 text-sm">{m.search_mode_note()}</p>
+			<!-- limit to a book (#50): valid for both searches -->
+			<div class="mt-2">
+				<label for="book-input"><span>{m.field_book()}</span></label>
+				<button
+					type="button"
+					class="info"
+					aria-describedby="book-info"
+					aria-expanded={bookInfoOpen}
+					aria-label={m.book_info_label()}
+					onclick={() => (bookInfoOpen = !bookInfoOpen)}
+					data-testid="book-info-button"
+				>
+					i
+				</button>
+				<input
+					id="book-input"
+					class="mt-1 block"
+					type="search"
+					list="book-list"
+					bind:value={bookText}
+					maxlength="120"
+					autocomplete="off"
+					placeholder={m.field_book_all()}
+					data-testid="book"
+				/>
+				<span
+					id="book-info"
+					role="tooltip"
+					class="info-text"
+					class:open={bookInfoOpen}
+					data-testid="book-info"
+				>
+					{m.book_info()}
+				</span>
+				<input type="hidden" name="book" value={bookId} />
+				<datalist id="book-list">
+					{#each data.books ?? [] as b (b.book)}
+						<option value={bookLabel(b)}></option>
+					{/each}
+				</datalist>
+				{#if bookUnknown}
+					<p class="pt-1 text-sm" role="alert" data-testid="book-unknown">{m.book_unknown()}</p>
+				{/if}
+			</div>
+			<!-- the order of the list (#23) -->
+			<label class="mt-2 block">
+				<span>{m.sort_label()}</span>
+				<select name="sort" data-testid="sort">
+					<option value="year">{m.sort_year()}</option>
+					<option value="name">{m.sort_name()}</option>
+					<option value="locality">{m.sort_locality()}</option>
+				</select>
+			</label>
 		</div>
 		<label>
 			<h2>{m.lime_sweet_fruit_taste()}</h2>
@@ -603,11 +667,13 @@
 	</div>
 {/if}
 
-{#if Object.keys(visibleResults).length > 0}
-	<div class="container mx-auto">
-		{#each Object.keys(visibleResults) as year (year)}
-			<h2 class="text-4xl" data-testid="year">{year}</h2>
-			{#each visibleResults[Number(year)] as result, i (i)}
+{#if visibleResults.length > 0}
+	<div class="container mx-auto" data-testid="list" data-sort={listSort}>
+		{#each visibleResults as group (group.year)}
+			{#if group.year !== null}
+				<h2 class="text-4xl" data-testid="year">{group.year}</h2>
+			{/if}
+			{#each group.entries as result, i (i)}
 				{@const scan = scanId(result.file, result.page)}
 				{@const pageLink = `https://iiif.ptt-archiv.ch/iiif/3/${scan}/full/max/0/default.jpg`}
 				<div class="flex min-h-24 gap-4 border-t-2 pb-4" data-testid="entry">
@@ -651,6 +717,13 @@
 							</p>
 						{/if}
 						<dl class="flex flex-wrap gap-2">
+							{#if group.year === null && result.year !== null}
+								<!-- no heading per year in a list ordered by name or place (#23) -->
+								<div data-testid="entry-year">
+									<dt>{m.result_year()}</dt>
+									<dd>{result.year}</dd>
+								</div>
+							{/if}
 							{#if result.similarity !== undefined && result.similarity < 1}
 								<!-- approximate search (#26): not what was typed, but this much like it -->
 								<div data-testid="similarity">
@@ -792,8 +865,29 @@
 			@apply mt-6;
 		}
 	}
-	input[type='text'] {
+	input[type='text'],
+	input[type='search'] {
 		width: 300px;
+	}
+	/* the [i] beside a field: its text shows on hover, on focus and after a tap (#50) */
+	.info {
+		width: 1.5em;
+		height: 1.5em;
+		border: 1px solid currentColor;
+		border-radius: 50%;
+		background: #fff;
+		font-weight: 700;
+		line-height: 1;
+		cursor: help;
+	}
+	.info-text {
+		display: none;
+		@apply pt-1 text-sm;
+	}
+	.info:hover ~ .info-text,
+	.info:focus-visible ~ .info-text,
+	.info-text.open {
+		display: block;
 	}
 	label span {
 		@apply pr-4;
@@ -805,7 +899,8 @@
 		line-height: 1.5em;
 	}
 	@media screen and (min-width: 780px) {
-		input[type='text'] {
+		input[type='text'],
+		input[type='search'] {
 			width: 370px;
 		}
 	}

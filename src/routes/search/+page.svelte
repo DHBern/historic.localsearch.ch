@@ -6,7 +6,7 @@
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
-	import { formatNumber, scanId } from '#lib/search.ts';
+	import { EXPORT_MAX, formatNumber, scanId } from '#lib/search.ts';
 	import { onMount, tick } from 'svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -200,6 +200,35 @@
 			mapFailed = true;
 		}
 		mapLoading = false;
+	}
+
+	// all hits of the search on screen as a CSV file (#28)
+	let exporting = $state(false);
+	let exportFailed = $state(false);
+	let exportTruncated = $state(false);
+	async function exportCsv() {
+		if (!lastQuery || exporting) return;
+		exporting = true;
+		exportFailed = false;
+		exportTruncated = false;
+		try {
+			const response = await fetch(localizeHref('/search/export'), {
+				method: 'POST',
+				body: lastQuery
+			});
+			if (!response.ok) throw new Error(String(response.status));
+			exportTruncated = response.headers.get('x-export-truncated') === '1';
+			const link = document.createElement('a');
+			link.href = URL.createObjectURL(await response.blob());
+			link.download = 'historic-localsearch.csv';
+			document.body.append(link);
+			link.click();
+			link.remove();
+			URL.revokeObjectURL(link.href);
+		} catch {
+			exportFailed = true;
+		}
+		exporting = false;
 	}
 
 	async function pick(place: { bfs: number | null; name: string | null } | undefined) {
@@ -498,6 +527,26 @@
 				</button>
 				<span class="experimental">{m.map_experimental()}</span>
 			</p>
+		{/if}
+		{#if loaded > 0}
+			<p class="status">
+				<button
+					class="h-10 rounded-full border border-current px-4"
+					data-testid="export-csv"
+					disabled={exporting}
+					onclick={exportCsv}
+				>
+					{exporting ? m.export_loading() : m.export_csv()}
+				</button>
+				<span class="pl-2 text-sm">{m.export_note({ max: formatNumber(EXPORT_MAX) })}</span>
+			</p>
+			{#if exportFailed}
+				<p class="status" role="alert" data-testid="export-error">{m.export_failed()}</p>
+			{:else if exportTruncated}
+				<p class="status" data-testid="export-truncated">
+					{m.export_truncated({ max: formatNumber(EXPORT_MAX) })}
+				</p>
+			{/if}
 		{/if}
 	{/if}
 </div>

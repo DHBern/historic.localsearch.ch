@@ -132,5 +132,10 @@
 	"field_occupation": "Occupation or trade from the list",
 	"field_occupation_note": "The list brings spellings, abbreviations and languages together: “Landwirt” also finds “Landw.”, “agric.” and “agricoltore”. It was assigned by machine and covers about two thirds of the entries with an occupation; the field “occupation” above still searches the printed text.",
 	"field_occupation_unknown": "Please choose an occupation from the list or clear the field.",
-	"result_occupation": "Occupation/trade (normalised)"
+	"result_occupation": "Occupation/trade (normalised)",
+	"export_csv": "Download as CSV",
+	"export_loading": "Preparing the CSV …",
+	"export_failed": "This search cannot be exported. Please narrow the search.",
+	"export_note": "The file holds all hits (at most {max}) with volume, page, fields and the link to the page image.",
+	"export_truncated": "The file holds the first {max} hits. Narrow the years to export later hits."
 }

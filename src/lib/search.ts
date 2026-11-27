@@ -2,6 +2,8 @@
 
 /** A search returns at most this many entries, oldest first. */
 export const MAX_ROWS = 2500;
+/** A CSV export holds at most this many entries, oldest first (#28). */
+export const EXPORT_MAX = 100000;
 export const MIN_LENGTH = 2;
 export const MAX_LENGTH = 60;
 
@@ -70,4 +72,22 @@ export function scanId(
 ): string | null {
 	if (!file || page === null || page === undefined) return null;
 	return encodeURIComponent(`${file.normalize('NFC')}_${String(page).padStart(4, '0')}`) + '.jp2';
+}
+
+/**
+ * One line of a CSV file (RFC 4180): fields that hold a comma, a quote or a line break are quoted. A field that
+ * starts with =, +, - or @ gets an apostrophe in front, so that a spreadsheet program shows it instead of
+ * running it as a formula ("-Frieden", "+41 31 …").
+ */
+export function csvLine(fields: (string | number | null | undefined)[]): string {
+	return (
+		fields
+			.map((field) => {
+				if (field === null || field === undefined) return '';
+				let text = String(field);
+				if (typeof field === 'string' && /^[=+\-@\t\r]/.test(text)) text = "'" + text;
+				return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+			})
+			.join(',') + '\r\n'
+	);
 }

@@ -12,7 +12,12 @@ test('the export holds all hits of the search, not the 20 on screen', async ({ p
 	await expect(page.getByTestId('hit-count')).toHaveText('Treffer: 3’092');
 	const download = page.waitForEvent('download');
 	await page.getByTestId('export-csv').click();
-	const file = await (await download).path();
+	const got = await download;
+	// the file is named after the search and the time of the query
+	expect(got.suggestedFilename()).toMatch(
+		/^historic-localsearch_text-Hodel_1880-1950_\d{4}-\d\d-\d\d_\d{4}\.csv$/
+	);
+	const file = await got.path();
 	const text = readFileSync(file, 'utf8');
 	expect(text.charCodeAt(0)).toBe(0xfeff);
 	const lines = text.slice(1).trimEnd().split('\r\n');
@@ -28,6 +33,24 @@ test('the export holds all hits of the search, not the 20 on screen', async ({ p
 	await expect(page.getByTestId('export-truncated')).toHaveCount(0);
 });
 
+test('the export button stands under the list of hits', async ({ page }) => {
+	await openSearch(page);
+	await page.locator('input[name=searchstring]').fill('Hodel');
+	await page.locator('input[name=searchstring]').press('Enter');
+	await expect(page.getByTestId('hit-count')).toBeVisible();
+	// in the order of the page: after the last entry and after the button that shows more entries
+	const after = await page.evaluate(() => {
+		const button = document.querySelector('[data-testid=export-csv]')!;
+		const follows = (other: Element) =>
+			(other.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+		const entries = document.querySelectorAll('[data-testid=entry]');
+		return (
+			follows(entries[entries.length - 1]) && follows(document.querySelector('[data-testid=more]')!)
+		);
+	});
+	expect(after).toBe(true);
+});
+
 test('the export follows the fields and the years of the search', async ({ request }) => {
 	const response = await request.post('/search/export', {
 		form: { entityname1: 'Hodel', from: '1880', to: '1900' },
@@ -35,7 +58,9 @@ test('the export follows the fields and the years of the search', async ({ reque
 	});
 	expect(response.status()).toBe(200);
 	expect(response.headers()['content-type']).toContain('text/csv');
-	expect(response.headers()['content-disposition']).toContain('historic-localsearch.csv');
+	expect(response.headers()['content-disposition']).toMatch(
+		/filename="historic-localsearch_name-Hodel_1880-1900_\d{4}-\d\d-\d\d_\d{4}\.csv"/
+	);
 	const lines = (await response.text()).trimEnd().split('\r\n');
 	expect(lines.length).toBe(18 + 1);
 	for (const line of lines.slice(1)) expect(Number(line.slice(0, 4))).toBeLessThanOrEqual(1900);

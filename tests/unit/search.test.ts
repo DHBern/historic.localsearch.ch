@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	csvLine,
+	exportFileName,
 	escapeHtml,
 	escapeLike,
 	excerpt,
@@ -85,5 +86,46 @@ describe('csvLine (#28)', () => {
 	it('keeps a spreadsheet program from reading a field as a formula', () => {
 		expect(csvLine(['=1+1', '-Frieden', '+41 31', '@x'])).toBe("'=1+1,'-Frieden,'+41 31,'@x\r\n");
 		expect(csvLine([-5])).toBe('-5\r\n');
+	});
+});
+
+describe('exportFileName (#28)', () => {
+	const form = (values: Record<string, string>) => {
+		const data = new FormData();
+		for (const [key, value] of Object.entries(values)) data.append(key, value);
+		return data;
+	};
+	// 18:05 UTC is 19:05 in Switzerland in winter
+	const at = new Date('2026-11-27T18:05:12Z');
+	it('names the search, the years and the time of the query', () => {
+		expect(
+			exportFileName(form({ entityname1: 'Hodel', locality: 'Bern', from: '1919', to: '1920' }), at)
+		).toBe('historic-localsearch_name-Hodel_ort-Bern_1919-1920_2026-11-27_1905.csv');
+	});
+	it('says so when the search was approximate, and uses summer time in summer', () => {
+		expect(
+			exportFileName(
+				form({ searchstring: 'Müller & Söhne, Zürich', mode: 'approx', from: '1880', to: '1950' }),
+				new Date('2026-07-01T10:00:00Z')
+			)
+		).toBe(
+			'historic-localsearch_text-Mueller-Soehne-Zuerich_1880-1950_ungefaehr_2026-07-01_1200.csv'
+		);
+	});
+	it('keeps to letters and digits and leaves out empty fields', () => {
+		const name = exportFileName(
+			form({
+				entityname1: '../"x"\n',
+				entityname2: '',
+				street: 'r. de l’Hôtel',
+				from: '1900',
+				to: '1900'
+			}),
+			at
+		);
+		expect(name).toBe(
+			'historic-localsearch_name-x_strasse-r-de-l-Hotel_1900-1900_2026-11-27_1905.csv'
+		);
+		expect(name).toMatch(/^[A-Za-z0-9_.-]+$/);
 	});
 });

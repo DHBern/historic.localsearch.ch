@@ -12,9 +12,11 @@ nothing to decide between them, gets no row: no guessing.
 How a place is found (column method), and how far to trust it (column confidence):
   name, +canton ("Buchs St. G."), +exchange ("Trimstein, Netz Worb": the place of that name nearest to the
   exchange, at most NEAR_KM away), abkürzung ("Langnau i. E.")                                        high
-  exchange-only (hamlet unknown, shown at its exchange), name+volume (homonym decided by the volume),
+  exchange-only (hamlet unknown, shown at its exchange), bei-only ("Papiermühle b. Bern": hamlet unknown,
+  shown at the town it lies near, #72), name+volume (homonym decided by the volume),
   namensanfang ("Cheseaux" -> Cheseaux-sur-Lausanne)                                                  medium
-  unscharf (similar spelling, for misreadings; with an exchange at most FUZZY_KM away)                low
+  unscharf (similar spelling, for misreadings; with an exchange at most FUZZY_KM away),
+  unscharf+bei-only (the town of a "bei" form found by a similar spelling)                            low
 
 Writes OUT_DIR/places.tsv (all keys, with the unplaced ones and why), OUT_DIR/places_load.tsv (the placed keys
 in the column order of the table `places`, for db/places.sql) and OUT_DIR/report.json.
@@ -38,14 +40,17 @@ EXPAND = [(r"\ba\.\s?A\.?$", "an der Aare"), (r"\ba\.\s?Rh\.?$", "am Rhein"), (r
           (r"\ba\.\s?S\.?$", "am See"), (r"\ba\.\s?A(?:lbis)?\.?$", "am Albis"), (r"\ba\.\s?I\.?$", "am Irchel"),
           (r"\bb\.\s", "bei "), (r"\bi\.\s?S\.?$", "im Simmental"), (r"\ba\.\s?d\.\s?", "an der ")]
 MAIN_SHARE, EDGE_SHARE = 50, 10   # share of a postcode area in a municipality (per cent): its seat, and a mere edge
-BEI = re.compile(r"^(.+?),?\s+(?:b\.|bei)\s+(.+)$")
+BEI = re.compile(r"^(.+?)(?:,?\s+(?:b\.|bei)|(?<!,)\s+B\.)\s+(.+)$")   # "Lengnau B. Biel" too, but not "Rothenfluh, B. L."
+JOINED = re.compile(r"\s(?:[bai]\.|bei|am|im)\s")
+SHORT = {"w thur": "Winterthur", "h buchsee": "Herzogenbuchsee", "n glatt": "Niederglatt", "f kappelen": "Frauenkappelen",
+         "f kappel": "Frauenkappelen", "m buchsee": "Münchenbuchsee"}   # "Rickenbach b. W'thur"
 BIG = {"altdorf": "UR"}   # the register has no sizes: the capital of Uri, not the village of 200 in Schaffhausen
 LEAD = 3.0        # among several places of one name: the largest wins if it is this many times larger
 
 
 def confidence(how):
     if how.startswith("unscharf"): return "low"
-    if how in ("exchange-only", "name+volume") or how.startswith("namensanfang"): return "medium"
+    if how in ("exchange-only", "bei-only", "name+volume") or how.startswith("namensanfang"): return "medium"
     return "high"
 
 
@@ -115,6 +120,29 @@ class Resolver:
         cs, how = self.cands(name, printed=False)    # exchanges are named loosely: "Netz Brugg" is Brügg near Biel
         return self.pick(cs, how, name) if cs else (None, "")
 
+    def wider(self, name):
+        """The places of a name, with those that carry it as their first part: "Büren" is also Büren an der Aare."""
+        cs, how = self.cands(name)
+        k = key(name)
+        more = [c for ck in self.g.by_first.get(k[:1], ()) if ck.startswith(k + " ") and ck[len(k) + 1:].split()[0] in _places.CONNECTORS
+                for c in self.g.cands[ck] if not math.isnan(c["lat"])] if how == "name" else []
+        # "Davos Dorf" is no second Davos
+        return cs + [c for c in more if c not in cs and not any(dist_km(c, (o["lat"], o["lon"])) <= 2 * SAME_KM for o in cs)], how
+
+    def exchange(self, exch):
+        """The town an exchange is named after."""
+        if not exch: return None
+        if JOINED.search(exch) and "," not in exch:          # "Wohlen b. B.", "Erlenbach i. S.": its last letter is no canton
+            ex = self.town(exch.strip(" ,;"))[0]
+            if ex: return ex
+        ex = self.town(split_locality(exch)[0])[0]
+        if not ex and "," in exch:                           # "Fresens (St-Aubin, N.)": the canton tells the exchanges apart
+            en, eh, _ = split_locality(exch)
+            ecs, ehow = self.cands(en)
+            ecs = [c for c in ecs if c["canton"] == eh] if eh else []
+            if ecs: ex = self.pick(ecs, ehow, en)[0]
+        return ex
+
     def resolve(self, raw):
         s = title(raw.strip())
         exch = ""
@@ -134,25 +162,51 @@ class Resolver:
         toks = name.split()
         if not cs and len(toks) > 1 and key(toks[-1]) == "appenzell":          # "Teufen Appenzell"
             cs, how = self.cands(" ".join(toks[:-1])); cs = [c for c in cs if c["canton"] in ("AR", "AI")]; how += "+canton"
-        bei = BEI.match(name)
-        if not cs and bei and not full and not exch:                           # "Lengnau b. Biel": the Lengnau near Biel
-            cs, how = self.cands(bei.group(1)); ecs, _ = self.cands(bei.group(2), printed=False)
-            pairs = sorted((dist_km(c, (e["lat"], e["lon"])), i) for i, c in enumerate(cs) for e in ecs)
-            # "bei" names no exchange to show the entry at, and a similar spelling is no find here
-            if not pairs or pairs[0][0] > FUZZY_KM or how.startswith("unscharf"): return None, "unknown"
-            near = cs[pairs[0][1]]
-            same = [c for c in cs if dist_km(c, (near["lat"], near["lon"])) <= SAME_KM]
-            return (self.pick(same, how, bei.group(1))[0] or near), how + "+exchange"
+        exch = re.sub(r"\b0\d\d\b|\(|\)", "", exch).strip()
+        ex = self.exchange(exch)
+        # "Lengnau b. Biel", "Lengnau, bei Biel", "Reichenbach b. Bern": taken apart before the comma or a town that
+        # is also the name of a canton is read as something else
+        base = re.sub(r"\s*\(.*$", "", s).strip(" ,.")
+        self.whole = bool(full and BEI.match(base) and not fhow.startswith("unscharf"))
+        bei = None if full or (cs and BEI.match(name)) else BEI.match(base)
+        if bei:
+            x, y = bei.group(1).strip(" ,"), bei.group(2).strip(" ,.")
+            yhint = ""
+            if "," in y: y, yhint, _ = split_locality(y)                    # "Oberwil b. Bremgarten, Aarg."
+            y = SHORT.get(key(y), y)
+        if bei and len(key(y)) < 3: bei = None                             # "Rothenfluh, b. l." is Baselland
+        if bei:
+            xcs, xhow = self.cands(x); ycs, yhow = self.wider(y)
+            if yhint: xcs = [c for c in xcs if c["canton"] == yhint] or xcs; ycs = [c for c in ycs if c["canton"] == yhint] or ycs
+            if xhow == "namensanfang":      # "Wilen bei Neunforn" is not the Wilen near Herdern
+                first = lambda n: (key(n).split() or [""])[0]
+                xcs = [c for c in xcs if not BEI.match(c["name"]) or first(BEI.match(c["name"]).group(2)) == first(y)]
+            loose = ycs if yhint else ycs + [c for c in self.cands(y, printed=False)[0] if c not in ycs]
+            pairs = sorted((dist_km(c, (e["lat"], e["lon"])), i) for i, c in enumerate(xcs) for e in loose)
+            if pairs and pairs[0][0] <= FUZZY_KM and not xhow.startswith("unscharf"):     # the Lengnau near Biel
+                near = xcs[pairs[0][1]]
+                same = [c for c in xcs if dist_km(c, (near["lat"], near["lon"])) <= SAME_KM]
+                return (self.pick(same, xhow, x)[0] or near), xhow + "+exchange"
+            # X is a hamlet the register does not have, or only has elsewhere: the entry is shown at Y, which lies
+            # nearer than the exchange. A Y of several places, or one found by a similar spelling, must lie near
+            # the exchange if one is named; without one the volume decides between several.
+            if ycs:
+                fz = yhow.startswith("unscharf")
+                one = max(dist_km(a, (b["lat"], b["lon"])) for a in ycs for b in ycs) <= SAME_KM
+                if ex and (fz or not one):
+                    ynear = sorted(ycs, key=lambda c: dist_km(c, (ex["lat"], ex["lon"])))
+                    ok = dist_km(ynear[0], (ex["lat"], ex["lon"])) <= (FUZZY_KM if fz else NEAR_KM)
+                    ycs = [c for c in ycs if dist_km(c, (ynear[0]["lat"], ynear[0]["lon"])) <= SAME_KM] if ok else []
+                if ycs:
+                    cand, h = self.pick(ycs, yhow, y)
+                    if cand: return cand, ("unscharf+" if fz else "") + "bei-only"
+                    if not exch: return cand, h                            # several places: decided by the volume
+            if not exch: return None, "unknown"     # "bei" names no exchange, and the whole is no name of its own
         if not cs and "," in s and not exch:                                   # "Riedbach, Bern": hamlet, town
             exch = s.split(",", 1)[1].strip()
         if full and (not cs or key(name) != key(s)) and self.pick(full, fhow, s)[0]: cs, how, hint = full, fhow, ""
         exch = re.sub(r"\b0\d\d\b|\(|\)", "", exch).strip()
-        ex, _ = self.town(split_locality(exch)[0]) if exch else (None, "")
-        if exch and not ex and "," in exch:              # "Fresens (St-Aubin, N.)": the canton tells the exchanges apart
-            en, eh, _ = split_locality(exch)
-            ecs, ehow = self.cands(en)
-            ecs = [c for c in ecs if c["canton"] == eh] if eh else []
-            if ecs: ex = self.pick(ecs, ehow, en)[0]
+        ex = self.exchange(exch)
         if not cs:
             if ex: return ex, "exchange-only"        # hamlet unknown: the entry is shown at its exchange
             return None, "unknown"
@@ -179,12 +233,13 @@ def main():
         perfile[loc][f] = (int(y), int(c))
     R = Resolver(); rep = collections.Counter(); bydec = collections.defaultdict(collections.Counter); rows = []
     # pass 1: every string on its own
-    first = {}; fuzzy = {}
+    first = {}; fuzzy = {}; whole = {}
     weight = collections.defaultdict(collections.Counter)      # volume -> canton -> entries of the places found
     for loc in n:
-        R.alts = []; R.fuzzy = False
+        R.alts = []; R.fuzzy = False; R.whole = False
         cand, how = R.resolve(loc)
         first[loc] = (cand, how, R.alts if how == "ambiguous" else [])
+        whole[loc] = R.whole      # "Ried b. Kerzers" names its region itself
         fuzzy[loc] = R.fuzzy      # a similar spelling that fits several places is not decided by the volume ("Rüthi")
         if cand:
             for f, (y, c) in perfile[loc].items(): weight[f][cand["canton"]] += c
@@ -201,7 +256,7 @@ def main():
                 # a hamlet does not win over a municipality of the name that the volume covers as well ("Teufen")
                 weak = r[0]["kind"] != "gemeinde_1914" and any(a["kind"] == "gemeinde_1914" and weight[f][a["canton"]] >= REGION * tot for a in r[1:])
                 if r[0]["canton"] != r[1]["canton"] and w0 >= 3 * max(w1, 1) and w0 >= 0.01 * tot and not weak and not fuzzy.get(loc): c2, h2 = r[0], "name+volume"
-            elif cand and "exchange" not in how and "canton" not in how:
+            elif cand and "exchange" not in how and "canton" not in how and "bei-only" not in how and not whole[loc]:
                 tot = sum(weight[f].values()) or 1
                 if weight[f][cand["canton"]] < REGION * tot: c2, h2 = None, "out-of-region"
             final.append((loc, f, y, k, c2, h2))

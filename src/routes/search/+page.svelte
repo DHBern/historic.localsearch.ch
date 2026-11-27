@@ -30,6 +30,7 @@
 				phonenumber: string | null;
 				street: string | null;
 				supplement: string | null;
+				similarity?: number;
 			}[]
 		> = {};
 		const displayItems = form?.results?.slice(0, showresults);
@@ -91,6 +92,10 @@
 				return m.scarlet_warm_breeze_blow();
 			case 'invalid_years':
 				return m.magenta_foggy_mist_cover();
+			case 'approx_too_short':
+				return m.approx_too_short();
+			case 'approx_too_broad':
+				return m.approx_too_broad();
 			default:
 				return m.search_failed();
 		}
@@ -322,14 +327,15 @@
 					}}
 				/>
 			</label>
-			<!-- fuzzy search is non functional atm -->
-			<!-- <label>
-			<span>{m.ochre_salty_ocean_spray()}</span>
-			<select>
-				<option value="0">{m.bronze_cool_rain_drop()}</option>
-				<option value="1">{m.purple_fast_dog_run()}</option>
-			</select>
-		</label> -->
+			<!-- as typed, or also words that resemble the term (#26) -->
+			<label class="mt-2 block">
+				<span>{m.search_mode()}</span>
+				<select name="mode" data-testid="mode">
+					<option value="exact">{m.bronze_cool_rain_drop()}</option>
+					<option value="approx">{m.purple_fast_dog_run()}</option>
+				</select>
+			</label>
+			<p class="pt-2 text-sm">{m.search_mode_note()}</p>
 		</div>
 		<label>
 			<h2>{m.lime_sweet_fruit_taste()}</h2>
@@ -663,6 +669,13 @@
 							</p>
 						{/if}
 						<dl class="flex flex-wrap gap-2">
+							{#if result.similarity !== undefined && result.similarity < 1}
+								<!-- approximate search (#26): not what was typed, but this much like it -->
+								<div data-testid="similarity">
+									<dt>{m.result_similarity()}</dt>
+									<dd>{Math.round(result.similarity * 100)} %</dd>
+								</div>
+							{/if}
 							{#if result.occupations?.length}
 								<div data-testid="occupations">
 									<dt>{m.result_occupation()}</dt>

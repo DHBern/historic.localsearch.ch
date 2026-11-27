@@ -103,12 +103,14 @@ test('% and _ are searched as characters (#13)', async ({ page }) => {
 	await expect(page.getByTestId('no-hits')).toBeVisible();
 });
 
-test('the help text does not describe an approximate search (#14)', async ({ page }) => {
+test('the help text describes the approximate search as it works (#14, #26)', async ({ page }) => {
 	await openSearch(page);
 	await page.getByRole('button', { name: 'Hilfe' }).click();
 	const help = page.getByRole('dialog');
 	await expect(help).toContainText('Weitere Einträge');
-	await expect(help).not.toContainText('Ungefähre Suche');
+	await expect(help).toContainText('Ungefähre Suche');
+	await expect(help).toContainText('wie ähnlich');
+	await expect(help).not.toContainText('auf eigene Gefahr');
 });
 
 test('pages have a title and a description (#15)', async ({ page, request }) => {
@@ -261,4 +263,64 @@ test('a text that is not in the list is not searched', async ({ page }) => {
 	await page.getByTestId('occupation').press('Enter');
 	await expect(page.getByTestId('occupation-unknown')).toBeVisible();
 	await expect(page.getByTestId('hit-count')).toHaveCount(0);
+});
+
+// The approximate search (#26): six fixture entries are misread as "Hodei".
+async function byName(
+	page: Page,
+	name: string,
+	mode: 'exact' | 'approx',
+	from = '1919',
+	to = '1937'
+) {
+	await openSearch(page);
+	await page.locator('input[name=from]').fill(from);
+	await page.locator('input[name=to]').fill(to);
+	await page.getByTestId('mode').selectOption(mode);
+	await page.locator('input[name=entityname1]').fill(name);
+	await page.locator('input[name=entityname1]').press('Enter');
+}
+
+test('the exact search does not find a misread name', async ({ page }) => {
+	await byName(page, 'Hodel', 'exact', '1919', '1919');
+	await expect(page.getByTestId('hit-count')).toBeVisible();
+	await expect(page.getByText('Kamer-Hodei')).toHaveCount(0);
+	await expect(page.getByTestId('similarity')).toHaveCount(0);
+});
+
+test('the approximate search finds it and says how close it is (#26)', async ({ page }) => {
+	await byName(page, 'Hodel', 'approx', '1919', '1919');
+	const hit = entries(page).filter({ hasText: 'Kamer-Hodei' });
+	await expect(hit).toHaveCount(1);
+	await expect(hit.getByTestId('similarity')).toHaveText(/Ähnlichkeit\s*\d\d %/);
+	// entries spelled as typed are still there, without the note
+	const exact = entries(page).filter({ hasText: /Hodel/ }).first();
+	await expect(exact).toBeVisible();
+	await expect(exact.getByTestId('similarity')).toHaveCount(0);
+});
+
+test('the approximate search works in the full text too (#26)', async ({ page }) => {
+	await openSearch(page);
+	await page.locator('input[name=from]').fill('1925');
+	await page.locator('input[name=to]').fill('1925');
+	await page.getByTestId('mode').selectOption('approx');
+	await page.locator('input[name=searchstring]').fill('Hodel');
+	await page.locator('input[name=searchstring]').press('Enter');
+	await expect(entries(page).filter({ hasText: 'Guggenbühler-Hodei' })).toHaveCount(1);
+});
+
+test('the approximate search needs four characters (#26)', async ({ page }) => {
+	await byName(page, 'Hod', 'approx');
+	await expect(page.getByTestId('error')).toHaveText(
+		'Für die ungefähre Suche geben Sie bitte mindestens 4 Zeichen ein.'
+	);
+});
+
+test('the map counts the hits of the approximate search (#26)', async ({ page }) => {
+	await byName(page, 'Hodel', 'approx', '1920', '1920');
+	const count = await page.getByTestId('hit-count').textContent();
+	await page.getByTestId('map-toggle').click();
+	const n = count!.replace('Treffer: ', '');
+	// the exact search has fewer hits in that year: the map must count the approximate ones
+	await expect(page.getByTestId('map-shown')).toContainText(`von ${n} Treffern`);
 });

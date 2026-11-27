@@ -8,26 +8,44 @@ import {
 	streets,
 	volumes
 } from '#lib/server/db/schema.ts';
-import { and, asc, count, eq, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { MAX_ROWS, excerpt } from '#lib/search.ts';
-import { criteria } from '#lib/server/criteria.ts';
+import { approxSetup, criteria } from '#lib/server/criteria.ts';
 
 // counting the hits of a very broad search must not hold up the answer
 const COUNT_TIMEOUT_MS = 4000;
+// an approximate search of a frequent word reads much of the table: it gives up after this long
+const APPROX_TIMEOUT_MS = 20000;
 
-/** Up to MAX_ROWS entries, oldest first, and the number of all hits (null if unknown). */
-async function run(where: SQL | undefined) {
+/**
+ * Up to MAX_ROWS entries, oldest first, and the number of all hits (null if unknown). An approximate search
+ * (#26) also says of every entry how much it resembles the term (`similarity`, 1 = as typed).
+ */
+async function run(where: SQL | undefined, similarity?: SQL<number>) {
 	const db = getDb();
-	const rows = await db
-		.select()
-		.from(records)
-		.where(where)
-		.orderBy(asc(records.year), asc(records.file), asc(records.page))
-		.limit(MAX_ROWS);
+	const order = [asc(records.year), asc(records.file), asc(records.page)];
+	const rows = similarity
+		? await db.transaction(async (tx) => {
+				await tx.execute(approxSetup);
+				await tx.execute(sql.raw(`set local statement_timeout = ${APPROX_TIMEOUT_MS}`));
+				return await tx
+					.select({ ...getTableColumns(records), similarity })
+					.from(records)
+					.where(where)
+					.orderBy(...order)
+					.limit(MAX_ROWS);
+			})
+		: await db
+				.select()
+				.from(records)
+				.where(where)
+				.orderBy(...order)
+				.limit(MAX_ROWS);
 	if (rows.length < MAX_ROWS) return { rows, total: rows.length };
 	try {
 		const total = await db.transaction(async (tx) => {
+			if (similarity) await tx.execute(approxSetup);
 			await tx.execute(sql.raw(`set local statement_timeout = ${COUNT_TIMEOUT_MS}`));
 			const [{ n }] = await tx.select({ n: count() }).from(records).where(where);
 			return n;
@@ -43,9 +61,10 @@ async function run(where: SQL | undefined) {
  * point, and what cannot be shown. The table `places` knows where a locality string of a volume is (#43);
  * `places_net` knows it for the names a volume holds twice, by the network of the entry (#71).
  */
-async function placeCounts(where: SQL | undefined) {
+async function placeCounts(where: SQL | undefined, approx: boolean) {
 	const db = getDb();
 	return await db.transaction(async (tx) => {
+		if (approx) await tx.execute(approxSetup);
 		await tx.execute(sql.raw(`set local statement_timeout = ${COUNT_TIMEOUT_MS}`));
 		// a key is in one of the two tables at most
 		const bfs = sql<number | null>`coalesce(${places.bfs}, ${placesNet.bfs})`;
@@ -113,9 +132,10 @@ async function placeCounts(where: SQL | undefined) {
  * Hits per street inside one municipality, for the map zoomed into a town (#46). `streets` knows the point of a
  * street string for the municipalities that have street points; for all others `available` is false.
  */
-async function streetCounts(where: SQL | undefined, bfs: number) {
+async function streetCounts(where: SQL | undefined, bfs: number, approx: boolean) {
 	const db = getDb();
 	return await db.transaction(async (tx) => {
+		if (approx) await tx.execute(approxSetup);
 		await tx.execute(sql.raw(`set local statement_timeout = ${COUNT_TIMEOUT_MS}`));
 		const [known] = await tx.select({ n: count() }).from(streets).where(eq(streets.bfs, bfs));
 		if (!known || known.n === 0) return { available: false as const };
@@ -201,10 +221,10 @@ export const actions: Actions = {
 	search: async (event) => {
 		const found = criteria(await event.request.formData(), true);
 		if ('error' in found) return fail(400, { error: found.error });
-		const { where, searchString } = found;
+		const { where, searchString, similarity } = found;
 
 		try {
-			const { rows, total } = await run(where);
+			const { rows, total } = await run(where, similarity);
 			// the entry text goes to the page as HTML: escaped, hits marked
 			const results = rows.map((row) => ({
 				...row,
@@ -215,6 +235,8 @@ export const actions: Actions = {
 			return { results, total };
 		} catch (e) {
 			console.error('search failed', e);
+			// an approximate search that ran out of time: say what helps
+			if (found.approx) return fail(503, { error: 'approx_too_broad' as const });
 			return fail(500, { error: 'failed' as const });
 		}
 	},
@@ -224,7 +246,7 @@ export const actions: Actions = {
 		const found = criteria(await event.request.formData(), false);
 		if ('error' in found) return fail(400, { error: found.error });
 		try {
-			return { map: await placeCounts(found.where) };
+			return { map: await placeCounts(found.where, found.approx) };
 		} catch (e) {
 			// a very broad search runs into the time limit: no map, the list is not affected
 			console.error('map count failed', e);
@@ -240,7 +262,7 @@ export const actions: Actions = {
 		if ('error' in found) return fail(400, { error: found.error });
 		if (!Number.isInteger(bfs) || bfs < 1) return fail(400, { error: 'invalid_place' as const });
 		try {
-			return { streets: await streetCounts(found.where, bfs) };
+			return { streets: await streetCounts(found.where, bfs, found.approx) };
 		} catch (e) {
 			console.error('street count failed', e);
 			return fail(503, { error: 'map_unavailable' as const });

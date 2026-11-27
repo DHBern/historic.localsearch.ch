@@ -1,10 +1,10 @@
 import type { RequestHandler } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
 import { records } from '#lib/server/db/schema.ts';
-import { asc, sql } from 'drizzle-orm';
+import { asc, getTableColumns, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { EXPORT_MAX, csvLine, scanId } from '#lib/search.ts';
-import { criteria } from '#lib/server/criteria.ts';
+import { approxSetup, criteria } from '#lib/server/criteria.ts';
 
 // a very broad search must not hold the function for long
 const EXPORT_TIMEOUT_MS = 25000;
@@ -24,7 +24,9 @@ const HEADER = [
 	'alliance',
 	'occupations',
 	'entry',
-	'page_image'
+	'page_image',
+	// approximate search (#26): how much the entry resembles the term (1 = as typed); else empty
+	'similarity'
 ];
 
 /**
@@ -38,8 +40,12 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		rows = await getDb().transaction(async (tx) => {
 			await tx.execute(sql.raw(`set local statement_timeout = ${EXPORT_TIMEOUT_MS}`));
+			if (found.approx) await tx.execute(approxSetup);
 			return await tx
-				.select()
+				.select({
+					...getTableColumns(records),
+					similarity: found.similarity ?? sql<number | null>`null`
+				})
 				.from(records)
 				.where(found.where)
 				.orderBy(asc(records.year), asc(records.file), asc(records.page))
@@ -70,7 +76,8 @@ export const POST: RequestHandler = async ({ request }) => {
 				row.alliance,
 				row.occupations?.join(' | '),
 				row.aggregatedcontent,
-				scan ? `https://iiif.ptt-archiv.ch/iiif/3/${scan}/full/max/0/default.jpg` : null
+				scan ? `https://iiif.ptt-archiv.ch/iiif/3/${scan}/full/max/0/default.jpg` : null,
+				row.similarity === null ? null : Math.round(Number(row.similarity) * 100) / 100
 			])
 		);
 	}

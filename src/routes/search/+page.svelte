@@ -11,7 +11,8 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let showresults = $state(20);
-	type Entry = NonNullable<NonNullable<ActionData>['results']>[number];
+	// (`similarity` only comes with an approximate search)
+	type Entry = NonNullable<NonNullable<ActionData>['results']>[number] & { similarity?: number };
 	// the list on screen: under a heading per year when it is ordered by year, else one run of entries (#23)
 	const listSort = $derived(form?.sort ?? 'year');
 	let visibleResults = $derived.by(() => {

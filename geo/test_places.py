@@ -31,7 +31,29 @@ class Places(unittest.TestCase):
         self.assertEqual(where("Rohrbach b. Huttwil")[:2], ("Rohrbach", "BE"))
         self.assertEqual(where("Staad bei Rorschach")[:2], ("Thal", "SG"))
         self.assertEqual(where("Muri b. Bern"), ("Muri bei Bern", "BE", "name"))          # a name of its own
-        self.assertEqual(where("Papiermühle b. Bern")[2], "unknown")                      # not shown in Bern
+        self.assertEqual(where("Lengnau B. Biel")[:2], ("Lengnau (BE)", "BE"))            # #72: a capital B.
+        self.assertEqual(where("Lengnau, bei Biel")[:2], ("Lengnau (BE)", "BE"))
+        self.assertEqual(where("Rickenbach b. W'thur")[:2], ("Rickenbach (ZH)", "ZH"))
+        self.assertEqual(where("Rothenfluh, B. L.")[:2], ("Rothenfluh", "BL"))            # Baselland, no "bei"
+
+    def test_bei_with_an_unknown_hamlet_is_shown_at_the_town(self):                       # #72
+        self.assertEqual(where("Papiermühle b. Bern"), ("Bern", "BE", "bei-only"))
+        self.assertEqual(where("Reichenbach b. Bern"), ("Bern", "BE", "bei-only"))        # not the one in the Kandertal
+        self.assertEqual(where("Glaris b. Davos"), ("Davos", "GR", "bei-only"))
+        self.assertEqual(where("Stalden b. Brugg"), ("Brugg", "AG", "bei-only"))          # Brugg, not Brügg
+        self.assertEqual(where("Weiern b. Züberwangen (Zuzwil)")[:2], ("Zuzwil (SG)", "SG"))
+        self.assertEqual(where("Kronbühl b. St. Galien"), ("St. Gallen", "SG", "unscharf+bei-only"))
+        self.assertEqual(confidence("bei-only"), "medium")
+        self.assertEqual(confidence("unscharf+bei-only"), "low")
+        # a similar spelling far from the exchange is no find: the entry stays at the exchange
+        self.assertEqual(where("Schwanden b. Goldbach (Lützelflüh-Goldbach)")[:2], ("Lützelflüh", "BE"))
+        self.assertEqual(where("Ottikon b. Gossau (Gossau, Zch.)")[:2], ("Gossau (ZH)", "ZH"))   # no Ottikon bei Kemptthal
+
+    def test_exchange_with_a_joined_name(self):                                           # #72
+        self.assertEqual(where("Oberdettigen (Wohlen b. B.)"), ("Wohlen bei Bern", "BE", "exchange-only"))
+        self.assertEqual(where("Grimmialp (Erlenbach i. S.)")[:2], ("Erlenbach im Simmental", "BE"))
+        self.assertEqual(where("Ebligen (Brienz, B.)")[:2], ("Brienz (BE)", "BE"))
+        self.assertEqual(where("Husen b. Lengnau (Lengnau, A.)")[1], "AG")
 
     def test_spelling_as_printed(self):
         self.assertEqual(where("Brugg")[:2], ("Brugg", "AG"))

@@ -19,9 +19,15 @@ How a place is found (column method), and how far to trust it (column confidence
   exchange, at most NEAR_KM away), abkürzung ("Langnau i. E.")                                        high
   exchange-only (hamlet unknown, shown at its exchange), bei-only ("Papiermühle b. Bern": hamlet unknown,
   shown at the town it lies near, #72), name+volume (homonym decided by the volume),
-  namensanfang ("Cheseaux" -> Cheseaux-sur-Lausanne)                                                  medium
+  namensanfang ("Cheseaux" -> Cheseaux-sur-Lausanne), weiler (a settlement below the postal localities,
+  from ref/hamlets.csv, if it is the only one of its name: "Kronbühl", "Räterschen"; #27)            medium
   unscharf (similar spelling, for misreadings; with an exchange at most FUZZY_KM away),
   unscharf+bei-only (the town of a "bei" form found by a similar spelling)                            low
+
+A string that is not found as it stands is read another way before it is given up (#27): a reference ("Brand
+siehe Lenk i." is shown at Lenk), a name turned round ("Stammheim, Ober-", "Tour-de-Peilz, La"), a region
+instead of a canton ("Moutier Jura Bernois"), two languages ("Scuol / Schuls"), an abbreviation that broke off
+("Langnau i."). Liechtenstein and Campione are out of region.
 
 A name that stays ambiguous for a volume ("Reinach" in a volume with both) is decided per entry where the entry
 itself says more: its field network names the canton ("Aarg.", "Bld.": name+canton, high), an area code ("064":
@@ -47,7 +53,8 @@ NEAR_KM = 40      # a place must lie this near to its exchange
 SAME_KM = 8       # candidates of one name this near to each other are one place (a postcode area over two municipalities)
 ALIAS = {"bienne": "Biel|BE", "biel bienne": "Biel|BE", "geneve": "Genève", "genf": "Genève", "neuenburg": "Neuchâtel",
          "freiburg": "Fribourg", "sitten": "Sion", "siders": "Sierre", "pruntrut": "Porrentruy", "delsberg": "Delémont",
-         "st gallen": "St. Gallen", "montana vermala": "Montana", "hasle ruegsau": "Hasle b. Burgdorf"}
+         "st gallen": "St. Gallen", "montana vermala": "Montana", "hasle ruegsau": "Hasle b. Burgdorf",
+         "neukirch i": "Neukirch (Egnach)", "neukirch i e": "Neukirch (Egnach)"}   # "im Egnach": its hamlets say so (#27)
 EXPAND = [(r"\ba\.\s?A\.?$", "an der Aare"), (r"\ba\.\s?Rh\.?$", "am Rhein"), (r"\bi\.\s?E\.?$", "im Emmental"),
           (r"\ba\.\s?S\.?$", "am See"), (r"\ba\.\s?A(?:lbis)?\.?$", "am Albis"), (r"\ba\.\s?I\.?$", "am Irchel"),
           (r"\bb\.\s", "bei "), (r"\bi\.\s?S\.?$", "im Simmental"), (r"\ba\.\s?d\.\s?", "an der ")]
@@ -61,12 +68,36 @@ CODE = re.compile(r"\b0\d\d\b")
 CODE_MIN = 30     # undoubted entries of an area code needed to say where it lies
 NET_CANTON = {**{k: v for k, v in _places.CANTON_HINTS.items() if len(k) > 2 or k in ("be", "so", "vd", "sg", "zh", "lu", "ag", "tg", "fr", "ne", "vs", "ti", "bl", "gl", "sh", "zg", "sz", "ow", "nw", "ur", "ar", "ai", "ge")},
               "fbg": "FR", "gve": "GE", "grb": "GR", "obw": "OW", "nidw": "NW", "st g": "SG"}
+# #27: other ways to read a string the register does not know as it stands
+SEE = re.compile(r"^(.+?)[,;]?\s+\(?(?:siehe(?: unter)?|s\.|voir(?: sous)?|vedi(?: sotto)?)\s+(.+?)\)?$", re.I)
+TURNED = re.compile(r"^(.+?),?\s+(Ober|Unter|Nieder|Mittel|Hinter|Vorder|Gross|Klein)-$|^(.+?),\s*(La|Le|Les|L[’']|Il|Lo)$", re.I)
+AREA = [(r"\s+(?:Jura Bernois|Berner Jura|J\. ?B\.)$", "Bern"), (r"\s+St\.? ?Gal[il]en$|\s+St\.?G\.?$|\s+(?:Rheintal|Toggenburg)$", "St. G."),
+        (r"\s+Z[üu]richsee$", "Zch."), (r"\s+Obwalden$", "OW"), (r"\s+Nidwalden$", "NW"), (r"\s+Mesolcina$", "Graub."),
+        (r"\s+Ne[nu][ec]h\.?$", "Neuch."), (r"\s+Eng(?:adin)?\.?$", "Graub."), (r"\s+Wall?is$|\s+Wai\.$", "Wallis")]
+ABROAD = re.compile(r"F[üu]rstent(?:um|\.)?\s+Liechtenstein|\bd['’]Italia$", re.I)
+CUT = re.compile(r"\s+[iab]\.?$")       # "Neukirch i.", "Oetwil a.": the abbreviation broke off
+
+
+def variants(s, full):
+    """The string read another way, most specific first: (string, the method must name the exchange)."""
+    out = []
+    m = SEE.match(s)
+    if m: out.append((f"{m.group(1)}, Netz {full(m.group(2))}", True))
+    m = TURNED.match(s)
+    if m: out.append((m.group(2) + m.group(1).lower() if m.group(1) else f"{m.group(4)} {m.group(3)}".replace("’ ", "’").replace("' ", "'"), False))
+    for rx, hint in AREA:
+        if re.search(rx, s, re.I): out.append((re.sub(rx, "", s, flags=re.I) + ", " + hint, False))
+    if "/" in s: out += [(p.strip(), False) for p in s.split("/") if len(p.strip()) > 2]
+    if CUT.search(s) and full(s) != s: out.append((full(s), False))
+    return [v for v in out if v[0] and v[0] != s]
+
+
 LEAD = 3.0        # among several places of one name: the largest wins if it is this many times larger
 
 
 def confidence(how):
     if how.startswith("unscharf"): return "low"
-    if how in ("exchange-only", "bei-only", "name+volume", "name+code") or how.startswith("namensanfang"): return "medium"
+    if how in ("exchange-only", "bei-only", "name+volume", "name+code") or how.startswith(("namensanfang", "weiler")): return "medium"
     return "high"
 
 
@@ -150,6 +181,18 @@ class Resolver:
             if b not in mun or sc > mun[b][4]:
                 mun[b] = (r["municipality_today"], r["canton"], float(r["lat"]), float(r["lon"]), sc)
         self.mun = mun
+        # #27: settlements below the postal localities (ref/hamlets.csv, swissNAMES3D). A second register that holds
+        # them as well is asked only for strings the first one cannot place, so nothing placed before moves.
+        self.gh = Gazetteer(); self.base = self.g
+        bfs = {(key(re.sub(r"\s*\([A-Z]{2}\)$", "", v[0])), v[1]): b for b, v in mun.items()}
+        path = REF / "hamlets.csv"
+        for r in (csv.DictReader(open(path, encoding="utf-8")) if path.exists() else ()):
+            b = bfs.get((key(re.sub(r"\s*\([A-Z]{2}\)$", "", r["municipality"])), r["canton"])); k = key(r["name"])
+            if not b or k in self.base.cands: continue
+            if k not in self.gh.cands: self.gh.by_first[k[:1]].append(k)
+            self.gh.cands[k].append({"kind": "weiler", "name": r["name"], "canton": r["canton"], "bfs_today": b, "hist_code": "",
+                                     "municipality_1914": "", "lat": float(r["lat"]), "lon": float(r["lon"]),
+                                     "plz": 1, "share": 100.0})
 
     def pick(self, cs, how, name):
         """One candidate out of several of the same name, or None if they are different places."""
@@ -222,6 +265,42 @@ class Resolver:
         return ex
 
     def resolve(self, raw):
+        """resolve_one, and for a string it does not know the same string read another way (#27)."""
+        cand, how = self.resolve_one(raw)
+        if cand or how != "unknown": return cand, how
+        s = raw.strip()
+        if ABROAD.search(s): return None, "out-of-region"
+        keep = (self.alts, self.fuzzy, self.whole)
+        try:
+            for g in (self.base, self.gh):
+                self.g = g
+                for v, by_exchange in ([(s, False)] if g is self.gh else []) + variants(s, self.full):
+                    self.alts = []; self.fuzzy = False; self.whole = False
+                    c2, h2 = self.resolve_one(v)
+                    if by_exchange and "exchange" not in h2: continue      # "Bussy s. Ms" names no exchange
+                    # no guessing among hamlets: many share a name, so no similar spelling and no choice by the volume
+                    # (tried on 27.11.2026: "Kulm" went to Arosa, "Vorstadt" to Dietikon), and a hamlet is no exchange
+                    # for a name that stays unknown ("Riedbach" is also in the Valais)
+                    if g is self.gh and h2 == "ambiguous" and any(a["kind"] == "weiler" for a in self.alts): continue
+                    if c2 and c2["kind"] == "weiler" and (h2.startswith("unscharf") or h2 == "exchange-only"): continue
+                    if c2 and c2["kind"] == "weiler" and h2.startswith("name"): h2 = "weiler" + h2[len(h2.split("+")[0]):]
+                    if c2 or h2 == "ambiguous": return c2, h2
+        finally: self.g = self.base
+        self.alts, self.fuzzy, self.whole = keep
+        return cand, how
+
+    def full(self, name):
+        """"Erlenbach i." -> "Erlenbach im Simmental" if the register has one place that goes on like this."""
+        m = CUT.search(name)
+        if not m: return name
+        k = key(name[:m.start()]); a = key(m.group(0))[:1]
+        ks = [ck for ck in self.g.by_first.get(k[:1], ()) if ck.startswith(k + " ") and ck[len(k) + 1:].split()[0] in _places.CONNECTORS
+              and ck[len(k) + 1:].startswith(a)]
+        cs = [c for ck in ks for c in self.g.cands[ck] if not math.isnan(c["lat"])]
+        if cs and max(dist_km(x, (y["lat"], y["lon"])) for x in cs for y in cs) <= SAME_KM: return cs[0]["name"]
+        return name
+
+    def resolve_one(self, raw):
         s = title(raw.strip())
         exch = ""
         m = NET.match(s)

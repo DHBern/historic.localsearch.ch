@@ -1,7 +1,8 @@
 """Checks of the place resolver.  python3 -m unittest discover -s geo"""
 import os, sys, unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from build_places import Resolver, confidence
+import collections, tempfile
+from build_places import Resolver, confidence, net_parts, by_network
 import build_streets
 
 R = Resolver()
@@ -13,6 +14,29 @@ def where(raw):
 
 
 class Places(unittest.TestCase):
+    def test_network_of_the_entry(self):                                                 # #71
+        self.assertEqual(net_parts("Aarg."), ("AG", "", "Aarg"))
+        self.assertEqual(net_parts("(AARG.) 064"), ("AG", "064", "AARG"))
+        self.assertEqual(net_parts("St. G."), ("SG", "", "St. G"))
+        self.assertEqual(net_parts("061"), ("", "061", ""))
+        self.assertEqual(net_parts("Gr")[0], "")                                         # "Gruppe", not Graubünden
+        self.assertEqual(net_parts("Egnach"), ("", "", "Egnach"))
+
+    def test_a_name_twice_in_a_volume_is_decided_by_the_network(self):                   # #71
+        cand, how = R.resolve("Reinach"); alts = list(R.alts)
+        self.assertEqual(how, "ambiguous")
+        basel = R.resolve("Basel")[0]
+        first = {"Reinach": (None, "ambiguous", alts), "Basel": (basel, "name", [])}
+        final = [("Reinach", "v", 1946, 9, None, "ambiguous"), ("Basel", "v", 1946, 40, basel, "name")]
+        with tempfile.TemporaryDirectory() as d:
+            with open(d + "/n.tsv", "w", encoding="utf-8") as f:
+                f.write("Reinach\tv\tAarg.\t3\nReinach\tv\tBld.\t2\nReinach\tv\t061\t3\nReinach\tv\t099\t1\nBasel\tv\t061\t40\n")
+            rep = by_network(R, d + "/n.tsv", final, first, d)
+            got = {l.split("\t")[2]: (l.split("\t")[6], l.split("\t")[11]) for l in open(d + "/places_net_load.tsv", encoding="utf-8")}
+        self.assertEqual(got, {"Aarg.": ("AG", "name+canton"), "Bld.": ("BL", "name+canton"), "061": ("BL", "name+code")})
+        self.assertEqual((rep["placed"], rep["open code"]), (8, 1))                      # an unknown code decides nothing
+        self.assertEqual(confidence("name+code"), "medium")
+
     def test_plain_and_upper_case(self):
         self.assertEqual(where("Zürich")[:2], ("Zürich", "ZH"))
         self.assertEqual(where("GENÈVE")[:2], ("Genève", "GE"))

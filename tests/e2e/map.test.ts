@@ -46,6 +46,40 @@ test('a field search is counted with its years', async ({ request }) => {
 	expect(values[map.total]).toBe(18);
 });
 
+test('a name that a volume holds twice is placed by the network of the entry (#71)', async ({
+	request
+}) => {
+	// the fixture has Reinach six times in the volume of 1946: three with "Aarg.", three with "Bld."
+	const { type, data } = await mapCounts(request, {
+		locality: 'Reinach',
+		from: '1946',
+		to: '1946'
+	});
+	expect(type).toBe('success');
+	// the result is serialised with shared values: both circles carry the same count
+	expect(data).toContain('"Reinach (AG)","AG"');
+	expect(data).toContain('"Reinach (BL)","BL"');
+	const values = JSON.parse(data) as unknown[];
+	const map = values.find((v) => typeof v === 'object' && v !== null && 'shown' in v) as Record<
+		string,
+		number
+	>;
+	expect(values[map.total]).toBe(6);
+	expect(values[map.shown]).toBe(6);
+	const circles = values.filter(
+		(v) => typeof v === 'object' && v !== null && 'uncertain' in v
+	) as Record<string, number>[];
+	expect(circles.map((circle) => values[circle.n])).toEqual([3, 3]);
+	// a click on the circle in Baselland narrows the list to these three
+	const response = await request.post('/search?/search', {
+		form: { locality: 'Reinach', from: '1946', to: '1946', place: '2773' },
+		headers: { 'x-sveltekit-action': 'true', origin: 'http://localhost:4173' }
+	});
+	const body = String((await response.json()).data);
+	expect(body).toContain('Stephani');
+	expect(body).not.toContain('Giger');
+});
+
 test('refuses what the search refuses', async ({ request }) => {
 	expect((await mapCounts(request, { searchstring: 'x' })).status).toBe(400);
 	expect((await mapCounts(request, {})).status).toBe(400);

@@ -1,6 +1,13 @@
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
-import { occupationRegister, places, records, streets, volumes } from '#lib/server/db/schema.ts';
+import {
+	occupationRegister,
+	places,
+	placesNet,
+	records,
+	streets,
+	volumes
+} from '#lib/server/db/schema.ts';
 import { and, asc, between, count, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -58,24 +65,32 @@ async function run(where: SQL | undefined) {
 
 /**
  * Hits per municipality of today for the whole result, for the map (#44): one row per municipality with its
- * point, and what cannot be shown. The table `places` knows where a locality string of a volume is (#43).
+ * point, and what cannot be shown. The table `places` knows where a locality string of a volume is (#43);
+ * `places_net` knows it for the names a volume holds twice, by the network of the entry (#71).
  */
 async function placeCounts(where: SQL | undefined) {
 	const db = getDb();
 	return await db.transaction(async (tx) => {
 		await tx.execute(sql.raw(`set local statement_timeout = ${COUNT_TIMEOUT_MS}`));
+		// a key is in one of the two tables at most
+		const bfs = sql<number | null>`coalesce(${places.bfs}, ${placesNet.bfs})`;
+		const name = sql<string | null>`coalesce(${places.municipality}, ${placesNet.municipality})`;
+		const canton = sql<string | null>`coalesce(${places.canton}, ${placesNet.canton})`;
+		const lat = sql<number | null>`coalesce(${places.lat}, ${placesNet.lat})`;
+		const lon = sql<number | null>`coalesce(${places.lon}, ${placesNet.lon})`;
 		const rows = await tx
 			.select({
-				bfs: places.bfs,
-				name: places.municipality,
-				canton: places.canton,
-				lat: places.lat,
-				lon: places.lon,
+				bfs,
+				name,
+				canton,
+				lat,
+				lon,
 				n: count(),
 				// hits whose place was only matched by a similar spelling
-				uncertain: sql<number>`count(*) filter (where ${places.confidence} = 'low')`.mapWith(
-					Number
-				),
+				uncertain:
+					sql<number>`count(*) filter (where coalesce(${places.confidence}, ${placesNet.confidence}) = 'low')`.mapWith(
+						Number
+					),
 				// hits without any locality (volumes without fields)
 				noLocality:
 					sql<number>`count(*) filter (where ${records.locality} is null or btrim(${records.locality}) = '')`.mapWith(
@@ -84,8 +99,16 @@ async function placeCounts(where: SQL | undefined) {
 			})
 			.from(records)
 			.leftJoin(places, and(eq(places.locality, records.locality), eq(places.file, records.file)))
+			.leftJoin(
+				placesNet,
+				and(
+					eq(placesNet.locality, records.locality),
+					eq(placesNet.file, records.file),
+					eq(placesNet.network, records.network)
+				)
+			)
 			.where(where)
-			.groupBy(places.bfs, places.municipality, places.canton, places.lat, places.lon);
+			.groupBy(bfs, name, canton, lat, lon);
 		const unplaced = rows.find((row) => row.bfs === null);
 		const placed = rows
 			.filter((row) => row.bfs !== null)
@@ -225,7 +248,8 @@ function criteria(formData: FormData, withPlace: boolean) {
 		if (!Number.isInteger(bfs) || bfs < 1 || bfs > 9999) return { error: 'invalid_place' as const };
 		where = and(
 			where,
-			sql`exists (select 1 from ${places} where ${places.locality} = ${records.locality} and ${places.file} = ${records.file} and ${places.bfs} = ${bfs})`
+			sql`(exists (select 1 from ${places} where ${places.locality} = ${records.locality} and ${places.file} = ${records.file} and ${places.bfs} = ${bfs})
+				or exists (select 1 from ${placesNet} where ${placesNet.locality} = ${records.locality} and ${placesNet.file} = ${records.file} and ${placesNet.network} = ${records.network} and ${placesNet.bfs} = ${bfs}))`
 		);
 	}
 	return { where, searchString };

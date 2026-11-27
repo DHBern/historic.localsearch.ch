@@ -6,7 +6,7 @@
 	import typewriter from '#lib/typewriter.ts';
 	import type { PageData, ActionData } from './$types';
 	import pdfIds from './pdfIds.json';
-	import { EXPORT_MAX, formatNumber, scanId } from '#lib/search.ts';
+	import { EXPORT_MAX, exportFileName, formatNumber, scanId } from '#lib/search.ts';
 	import { onMount, tick } from 'svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -225,7 +225,9 @@
 			exportTruncated = response.headers.get('x-export-truncated') === '1';
 			const link = document.createElement('a');
 			link.href = URL.createObjectURL(await response.blob());
-			link.download = 'historic-localsearch.csv';
+			// the server names the file after the search and the time of the query
+			const named = /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '');
+			link.download = named ? named[1] : exportFileName(lastQuery, new Date());
 			document.body.append(link);
 			link.click();
 			link.remove();
@@ -534,26 +536,6 @@
 				<span class="experimental">{m.map_experimental()}</span>
 			</p>
 		{/if}
-		{#if loaded > 0}
-			<p class="status">
-				<button
-					class="h-10 rounded-full border border-current px-4"
-					data-testid="export-csv"
-					disabled={exporting}
-					onclick={exportCsv}
-				>
-					{exporting ? m.export_loading() : m.export_csv()}
-				</button>
-				<span class="pl-2 text-sm">{m.export_note({ max: formatNumber(EXPORT_MAX) })}</span>
-			</p>
-			{#if exportFailed}
-				<p class="status" role="alert" data-testid="export-error">{m.export_failed()}</p>
-			{:else if exportTruncated}
-				<p class="status" data-testid="export-truncated">
-					{m.export_truncated({ max: formatNumber(EXPORT_MAX) })}
-				</p>
-			{/if}
-		{/if}
 	{/if}
 </div>
 
@@ -760,6 +742,27 @@
 				</button>
 			</div>
 		{/if}
+		<!-- all hits of this search as a file (#28), under the list -->
+		<div class="pt-6">
+			<p class="status">
+				<button
+					class="h-10 rounded-full border border-current px-4"
+					data-testid="export-csv"
+					disabled={exporting}
+					onclick={exportCsv}
+				>
+					{exporting ? m.export_loading() : m.export_csv()}
+				</button>
+				<span class="pl-2 text-sm">{m.export_note({ max: formatNumber(EXPORT_MAX) })}</span>
+			</p>
+			{#if exportFailed}
+				<p class="status" role="alert" data-testid="export-error">{m.export_failed()}</p>
+			{:else if exportTruncated}
+				<p class="status" data-testid="export-truncated">
+					{m.export_truncated({ max: formatNumber(EXPORT_MAX) })}
+				</p>
+			{/if}
+		</div>
 	</div>
 {/if}
 

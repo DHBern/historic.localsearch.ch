@@ -3,7 +3,7 @@ import { getDb } from '#lib/server/db/index.ts';
 import { records } from '#lib/server/db/schema.ts';
 import { asc, getTableColumns, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
-import { EXPORT_MAX, csvLine, scanId } from '#lib/search.ts';
+import { EXPORT_MAX, csvLine, exportFileName, scanId } from '#lib/search.ts';
 import { approxSetup, criteria } from '#lib/server/criteria.ts';
 
 // a very broad search must not hold the function for long
@@ -34,7 +34,8 @@ const HEADER = [
  * the volume, the page and the address of the page image.
  */
 export const POST: RequestHandler = async ({ request }) => {
-	const found = criteria(await request.formData(), true);
+	const formData = await request.formData();
+	const found = criteria(formData, true);
 	if ('error' in found) error(400, found.error);
 	let rows;
 	try {
@@ -85,7 +86,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	return new Response('﻿' + lines.join(''), {
 		headers: {
 			'content-type': 'text/csv; charset=utf-8',
-			'content-disposition': 'attachment; filename="historic-localsearch.csv"',
+			'content-disposition': `attachment; filename="${exportFileName(formData, new Date())}"`,
 			'cache-control': 'no-store',
 			'x-export-rows': String(Math.min(rows.length, EXPORT_MAX)),
 			'x-export-truncated': truncated ? '1' : '0'

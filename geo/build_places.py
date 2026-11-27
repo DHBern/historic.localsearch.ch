@@ -8,7 +8,10 @@ Geocodes the locality STRINGS, not the entries. Every locality string of a volum
 it lies in (one circle per municipality of today, decision of 20.11.2026) and a point. Names are resolved with
 the place register in gazetteer.py and ref/. The key includes the volume because a name can mean different places
 in different books: "Kilchberg" is in Baselland in volume 2 and in Zürich in volume 3; such names are decided by
-the cantons the volume otherwise covers. A string that cannot be resolved, or that fits several places with
+the cantons the volume otherwise covers. A place found by its name alone must lie in the area of its volume: in
+a canton that holds REGION of the volume, or within EDGE_KM of the places of the volume (Kerzers in the Bern
+volume, #73); otherwise the name may be the short form of a place of the volume ("Erlenbach" for Erlenbach im
+Simmental: namensanfang+volume), and if not, the string is out of region. A string that cannot be resolved, or that fits several places with
 nothing to decide between them, gets no row: no guessing.
 
 How a place is found (column method), and how far to trust it (column confidence):
@@ -39,6 +42,7 @@ _places.CANTON_HINTS.update({"f": "FR", "n": "NE", "v": "VD", "g": "GE", "frbg":
 NET = re.compile(r"^(.*?)[,;]?\s+(?:Netz|Netzgruppe|réseau|reseau|rete|groupe|Gruppe|gruppo)\s+(.+)$", re.I)
 FUZZY_KM = 15     # ... and this near if the name only resembles the place
 REGION = 0.005    # a place found by name alone must lie in a canton that holds this share of its volume
+EDGE_KM = 10      # a place of a canton the volume hardly covers is kept if it lies this near to the places of the volume
 NEAR_KM = 40      # a place must lie this near to its exchange
 SAME_KM = 8       # candidates of one name this near to each other are one place (a postcode area over two municipalities)
 ALIAS = {"bienne": "Biel|BE", "biel bienne": "Biel|BE", "geneve": "Genève", "genf": "Genève", "neuenburg": "Neuchâtel",
@@ -278,7 +282,10 @@ class Resolver:
             if not exch: return None, "unknown"     # "bei" names no exchange, and the whole is no name of its own
         if not cs and "," in s and not exch:                                   # "Riedbach, Bern": hamlet, town
             exch = s.split(",", 1)[1].strip()
-        if full and (not cs or key(name) != key(s)) and self.pick(full, fhow, s)[0]: cs, how, hint = full, fhow, ""
+        # the whole as a name of its own ("Muri b. Bern"), but a canton is not given up for a longer name that the
+        # whole merely abbreviates: "Biel Be" is Biel in Bern, not Biel-Benken; "Brienz, B." is not Brinzauls
+        hinted = hint and any(c["canton"] == hint for c in cs) and not JOINED.search(s + " ")   # not "Beinwil a. S."
+        if full and (not cs or key(name) != key(s)) and not (hinted and fhow == "abkürzung") and self.pick(full, fhow, s)[0]: cs, how, hint = full, fhow, ""
         exch = re.sub(r"\b0\d\d\b|\(|\)", "", exch).strip()
         ex = self.exchange(exch)
         if not cs:
@@ -307,7 +314,7 @@ def main():
         perfile[loc][f] = (int(y), int(c))
     R = Resolver(); rep = collections.Counter(); bydec = collections.defaultdict(collections.Counter); rows = []
     # pass 1: every string on its own
-    first = {}; fuzzy = {}; whole = {}
+    first = {}; fuzzy = {}; whole = {}; anchors = {}
     weight = collections.defaultdict(collections.Counter)      # volume -> canton -> entries of the places found
     for loc in n:
         R.alts = []; R.fuzzy = False; R.whole = False
@@ -332,7 +339,23 @@ def main():
                 if r[0]["canton"] != r[1]["canton"] and w0 >= 3 * max(w1, 1) and w0 >= 0.01 * tot and not weak and not fuzzy.get(loc): c2, h2 = r[0], "name+volume"
             elif cand and "exchange" not in how and "canton" not in how and "bei-only" not in how and not whole[loc]:
                 tot = sum(weight[f].values()) or 1
-                if weight[f][cand["canton"]] < REGION * tot: c2, h2 = None, "out-of-region"
+                if weight[f][cand["canton"]] < REGION * tot:
+                    # #73: the cantons alone are too coarse. A place on the edge of the area is a place of the volume
+                    # (Kerzers in the Bern volume, Appenzell in the volume of eastern Switzerland) ...
+                    if f not in anchors:
+                        anchors[f] = [(a["lat"], a["lon"]) for l2, (a, h, _) in first.items()
+                                      if a and f in perfile[l2] and perfile[l2][f][1] >= 3 and confidence(h) == "high"
+                                      and weight[f][a["canton"]] >= REGION * tot]
+                    # (not for a similar spelling: near the edge there is always some place that resembles it)
+                    if not how.startswith("unscharf") and min((dist_km(cand, p) for p in anchors[f]), default=math.inf) <= EDGE_KM: rep["edge entries"] += k
+                    else:
+                        # ... and a name that only fits elsewhere may be the short form of a place of the volume:
+                        # "Erlenbach" in the Bern volume is Erlenbach im Simmental, not the one on the lake of Zürich
+                        c2, h2 = None, "out-of-region"
+                        if how == "name":
+                            more = [a for a in R.wider(title(loc))[0] if a is not cand and weight[f][a["canton"]] >= REGION * tot]
+                            one = R.pick(more, "namensanfang", title(loc))[0] if more else None
+                            if one: c2, h2 = one, "namensanfang+volume"
             final.append((loc, f, y, k, c2, h2))
     rows = []
     for loc, f, y, c, cand, how in final:

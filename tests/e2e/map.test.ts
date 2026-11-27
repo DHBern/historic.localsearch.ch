@@ -80,6 +80,31 @@ test('a name that a volume holds twice is placed by the network of the entry (#7
 	expect(body).not.toContain('Giger');
 });
 
+test('entries without a network go to the far larger place of the name (#71)', async ({
+	request
+}) => {
+	// the fixture has "Teufen" 20 times without a network in 1940; the volume of 1946 knows the Teufen in
+	// Appenzell with 12 entries and the hamlet in the canton of Zürich with 2
+	const { type, data } = await mapCounts(request, { locality: 'Teufen', from: '1940', to: '1940' });
+	expect(type).toBe('success');
+	expect(data).toContain('"Teufen (AR)","AR"');
+	const values = JSON.parse(data) as unknown[];
+	const map = values.find((v) => typeof v === 'object' && v !== null && 'shown' in v) as Record<
+		string,
+		number
+	>;
+	expect(values[map.total]).toBe(20);
+	expect(values[map.shown]).toBe(20);
+	// the click on the circle finds them too (municipality 3024, Teufen AR)
+	const response = await request.post('/search?/search', {
+		form: { locality: 'Teufen', from: '1940', to: '1946', place: '3024' },
+		headers: { 'x-sveltekit-action': 'true', origin: 'http://localhost:4173' }
+	});
+	const body = String((await response.json()).data);
+	expect(body).toContain('Zellweger');
+	expect(body).not.toContain('Zuberbühler');
+});
+
 test('refuses what the search refuses', async ({ request }) => {
 	expect((await mapCounts(request, { searchstring: 'x' })).status).toBe(400);
 	expect((await mapCounts(request, {})).status).toBe(400);

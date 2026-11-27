@@ -37,8 +37,8 @@ class Places(unittest.TestCase):
         self.assertEqual(where("Medikon (Oberwetzikon)"), ("Wetzikon (ZH)", "ZH", "weiler+exchange"))
         self.assertEqual(build_places.confidence("weiler"), "medium")
         self.assertEqual(where("Klösterli, siehe Neukirch i.")[::2], ("Egnach", "exchange-only"))   # ten hamlets of the name
-        self.assertEqual(where("Schönbühl")[2], "unknown")               # ten of them, nothing to decide by
-        self.assertEqual(where("Oberbottigen, Netz Riedbach")[2], "unknown")   # a hamlet is no exchange
+        self.assertEqual(where("Vorstadt")[2], "unknown")                # many of them, nothing to decide by
+        self.assertEqual(where("Oberbottigen, Netz Riedbach")[:2], ("Bern", "BE"))   # both decided by hand (#27)
         # nothing the register placed before is touched: the hamlets are asked last
         self.assertEqual(where("Marin-Epagnier")[2], "name")
 
@@ -82,11 +82,43 @@ class Places(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with open(d + "/n.tsv", "w", encoding="utf-8") as f:
                 f.write("Reinach\tv\tAarg.\t3\nReinach\tv\tBld.\t2\nReinach\tv\t061\t3\nReinach\tv\t099\t1\nBasel\tv\t061\t40\n")
-            rep = by_network(R, d + "/n.tsv", final, first, d)
+            rep = by_network(R, d + "/n.tsv", final, first, d, collections.defaultdict(collections.Counter))
             got = {l.split("\t")[2]: (l.split("\t")[6], l.split("\t")[11]) for l in open(d + "/places_net_load.tsv", encoding="utf-8")}
         self.assertEqual(got, {"Aarg.": ("AG", "name+canton"), "Bld.": ("BL", "name+canton"), "061": ("BL", "name+code")})
         self.assertEqual((rep["placed"], rep["open code"]), (8, 1))                      # an unknown code decides nothing
         self.assertEqual(confidence("name+code"), "medium")
+
+    def test_entries_without_a_network_go_to_the_far_larger_place(self):                 # #71
+        R.resolve("Teufen"); alts = list(R.alts)
+        first = {"Teufen": (None, "ambiguous", alts)}
+        final = [("Teufen", f"P-260-1_3_{y}", y, n, None, "ambiguous") for y, n in ((1940, 400), (1946, 420), (1941, 10))]
+        weight = collections.defaultdict(lambda: collections.Counter({"ZH": 500, "AR": 500}))
+        with tempfile.TemporaryDirectory() as d:
+            with open(d + "/n.tsv", "w", encoding="utf-8") as f:
+                f.write("Teufen\tP-260-1_3_1946\tApp.\t400\nTeufen\tP-260-1_3_1946\tZch.\t20\n")
+            rep = by_network(R, d + "/n.tsv", final, first, d, weight)
+            got = {(l.split("\t")[1][-4:], l.split("\t")[2]): (l.split("\t")[6], l.split("\t")[11]) for l in open(d + "/places_net_load.tsv", encoding="utf-8")}
+        self.assertEqual(got[("1940", "")], ("AR", "name+size"))                         # 400 entries: not the hamlet of 20
+        self.assertNotIn(("1941", ""), got)                                              # 10 entries could be either
+        self.assertEqual(rep["method name+size"], 400)
+        self.assertEqual(confidence("name+size"), "medium")
+
+    def test_names_decided_by_hand(self):                                                # #27, ref/printed_names.csv
+        self.assertEqual(where("Schönbühl"), ("Urtenen-Schönbühl", "BE", "alias"))
+        self.assertEqual(where("Rigi"), ("Arth", "SZ", "alias"))
+        self.assertEqual(where("Klus")[:2], ("Balsthal", "SO"))
+        self.assertEqual(where("Frutt, Netz Melchthal")[:2], ("Kerns", "OW"))             # not the Frutt in Nidwalden
+        self.assertEqual(where("Stein a. Rh.")[:2], ("Stein am Rhein", "SH"))             # no canton "A. Rh." read into it
+        self.assertEqual(where("Oberwil B.-L.")[1:], ("BL", "name+canton"))
+        self.assertEqual(where("Wangen a. Aare")[:2], ("Wangen an der Aare", "BE"))
+        self.assertEqual(where("Frauenfeld Gruppe")[:2], ("Frauenfeld", "TG"))            # the heading went on
+        for r in csv.DictReader(open(build_places.REF / "printed_names.csv", encoding="utf-8")):
+            cand, how = R.resolve(r["printed"])
+            self.assertTrue(cand and cand["canton"] == r["canton"] and how == "alias", r["printed"])
+
+    def test_a_hamlet_near_the_exchange_is_better_than_the_exchange(self):               # #27
+        self.assertEqual(where("Kunkels (Vättis)"), ("Tamins", "GR", "weiler+exchange"))
+        self.assertEqual(confidence("weiler+exchange"), "medium")
 
     def test_plain_and_upper_case(self):
         self.assertEqual(where("Zürich")[:2], ("Zürich", "ZH"))
@@ -112,9 +144,9 @@ class Places(unittest.TestCase):
         self.assertEqual(where("Rothenfluh, B. L.")[:2], ("Rothenfluh", "BL"))            # Baselland, no "bei"
 
     def test_bei_with_an_unknown_hamlet_is_shown_at_the_town(self):                       # #72
-        self.assertEqual(where("Papiermühle b. Bern"), ("Bern", "BE", "bei-only"))
+        self.assertEqual(where("Papiermühle b. Bern"), ("Ittigen", "BE", "alias+exchange"))   # decided by hand (#27)
         self.assertEqual(where("Reichenbach b. Bern"), ("Bern", "BE", "bei-only"))        # not the one in the Kandertal
-        self.assertEqual(where("Glaris b. Davos"), ("Davos", "GR", "bei-only"))
+        self.assertEqual(where("Glaris b. Davos"), ("Davos", "GR", "alias+exchange"))    # Davos Glaris, by hand (#27)
         self.assertEqual(where("Stalden b. Brugg"), ("Brugg", "AG", "bei-only"))          # Brugg, not Brügg
         self.assertEqual(where("Weiern b. Züberwangen (Zuzwil)")[:2], ("Zuzwil (SG)", "SG"))
         self.assertEqual(where("Kronbühl b. St. Galien"), ("St. Gallen", "SG", "unscharf+bei-only"))
@@ -125,9 +157,9 @@ class Places(unittest.TestCase):
         self.assertEqual(where("Ottikon b. Gossau (Gossau, Zch.)")[:2], ("Gossau (ZH)", "ZH"))   # no Ottikon bei Kemptthal
 
     def test_exchange_with_a_joined_name(self):                                           # #72
-        self.assertEqual(where("Oberdettigen (Wohlen b. B.)"), ("Wohlen bei Bern", "BE", "exchange-only"))
+        self.assertEqual(where("Oberdettigen (Wohlen b. B.)"), ("Wohlen bei Bern", "BE", "weiler+exchange"))   # the hamlet is known
         self.assertEqual(where("Grimmialp (Erlenbach i. S.)")[:2], ("Erlenbach im Simmental", "BE"))
-        self.assertEqual(where("Ebligen (Brienz, B.)")[:2], ("Brienz (BE)", "BE"))
+        self.assertEqual(where("Ebligen (Brienz, B.)")[:2], ("Oberried am Brienzersee", "BE"))   # the hamlet itself
         self.assertEqual(where("Husen b. Lengnau (Lengnau, A.)")[1], "AG")
 
     def test_spelling_as_printed(self):

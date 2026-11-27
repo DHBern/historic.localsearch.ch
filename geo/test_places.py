@@ -1,7 +1,8 @@
 """Checks of the place resolver.  python3 -m unittest discover -s geo"""
 import os, sys, unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import collections, tempfile
+import collections, contextlib, csv, io, sys, tempfile
+import build_places
 from build_places import Resolver, confidence, net_parts, by_network
 import build_streets
 
@@ -14,6 +15,29 @@ def where(raw):
 
 
 class Places(unittest.TestCase):
+    def test_a_canton_is_not_given_up_for_an_abbreviated_longer_name(self):              # #73
+        self.assertEqual(where("Biel Be")[1], "BE")                                      # not Biel-Benken
+        self.assertEqual(where("Brienz, B.")[:2], ("Brienz (BE)", "BE"))                 # not Brienz/Brinzauls
+        self.assertEqual(where("Beinwil a. S.")[:2], ("Beinwil am See", "AG"))           # "S." is no canton here
+        self.assertEqual(where("Oberhofen a. Th.")[0], "Oberhofen am Thunersee")
+
+    def test_the_area_of_a_volume_is_its_places_with_a_margin(self):                     # #73
+        counts = {"Bern": 3000, "Thun": 300, "Spiez": 50, "Wileroltigen": 5, "Kerzers": 5, "Erlenbach": 5, "Lugano": 3,
+                  "Kerzcers": 2}
+        with tempfile.TemporaryDirectory() as d:
+            with open(d + "/c.tsv", "w", encoding="utf-8") as f:
+                for loc, n in counts.items(): f.write(f"{loc}\tv\t1947\t{n}\n")
+            argv, sys.argv = sys.argv, ["build_places.py", d + "/c.tsv", d]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()): build_places.main()
+            finally: sys.argv = argv
+            got = {r["locality"]: (r["municipality"], r["canton"], r["method"])
+                   for r in csv.DictReader(open(d + "/places.tsv", encoding="utf-8"), delimiter="\t", quoting=csv.QUOTE_NONE)}
+        self.assertEqual(got["Kerzers"], ("Kerzers", "FR", "name"))                      # Fribourg, next to the Bern places
+        self.assertEqual(got["Erlenbach"], ("Erlenbach im Simmental", "BE", "namensanfang+volume"))   # not the one in Zürich
+        self.assertEqual(got["Lugano"][2], "out-of-region")                              # far away stays out
+        self.assertEqual(got["Kerzcers"][2], "out-of-region")                             # no similar spelling on the edge
+
     def test_network_of_the_entry(self):                                                 # #71
         self.assertEqual(net_parts("Aarg."), ("AG", "", "Aarg"))
         self.assertEqual(net_parts("(AARG.) 064"), ("AG", "064", "AARG"))

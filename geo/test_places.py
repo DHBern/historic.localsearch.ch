@@ -15,6 +15,33 @@ def where(raw):
 
 
 class Places(unittest.TestCase):
+    def test_a_string_the_register_does_not_know_is_read_another_way(self):              # #27
+        self.assertEqual(where("Allmenden siehe Erlenbach i.")[::2], ("Erlenbach im Simmental", "exchange-only"))
+        self.assertEqual(where("La Toulière (voir sous Charmoille)")[2], "exchange-only")
+        self.assertEqual(where("Stammheim, Ober-")[1:], ("ZH", "name"))                  # Oberstammheim
+        self.assertEqual(where("Tour-de-Peilz, La")[1], "VD")
+        self.assertEqual(where("Moutier Jura Bernois")[1:], ("BE", "name+canton"))
+        self.assertEqual(where("Gossau St. Galien")[1], "SG")
+        self.assertEqual(where("Scuol / Schuls")[1], "GR")
+        self.assertEqual(where("Langnau i.")[0], "Langnau im Emmental")
+        self.assertEqual(where("Schaan Fürstentum Liechtenstein")[2], "out-of-region")
+
+    def test_another_reading_is_not_forced(self):                                        # #27
+        self.assertEqual(where("Bussy s. Ms")[2], "unknown")             # "s." is "sur" here, no reference
+        self.assertEqual(where("Bach i.")[2], "unknown")                 # no single place goes on with "i..."
+        self.assertEqual(where("Frau")[2], "unknown")
+
+    def test_a_hamlet_is_placed_if_it_is_the_only_one_of_its_name(self):                 # #27
+        self.assertEqual(where("Kronbühl"), ("Wittenbach", "SG", "weiler"))
+        self.assertEqual(where("Räterschen")[:2], ("Elsau", "ZH"))
+        self.assertEqual(where("Medikon (Oberwetzikon)"), ("Wetzikon (ZH)", "ZH", "weiler+exchange"))
+        self.assertEqual(build_places.confidence("weiler"), "medium")
+        self.assertEqual(where("Klösterli, siehe Neukirch i.")[::2], ("Egnach", "exchange-only"))   # ten hamlets of the name
+        self.assertEqual(where("Schönbühl")[2], "unknown")               # ten of them, nothing to decide by
+        self.assertEqual(where("Oberbottigen, Netz Riedbach")[2], "unknown")   # a hamlet is no exchange
+        # nothing the register placed before is touched: the hamlets are asked last
+        self.assertEqual(where("Marin-Epagnier")[2], "name")
+
     def test_a_canton_is_not_given_up_for_an_abbreviated_longer_name(self):              # #73
         self.assertEqual(where("Biel Be")[1], "BE")                                      # not Biel-Benken
         self.assertEqual(where("Brienz, B.")[:2], ("Brienz (BE)", "BE"))                 # not Brienz/Brinzauls

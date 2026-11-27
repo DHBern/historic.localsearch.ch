@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml, escapeLike, excerpt, formatNumber, scanId } from '../../src/lib/search.ts';
+import {
+	csvLine,
+	escapeHtml,
+	escapeLike,
+	excerpt,
+	formatNumber,
+	scanId
+} from '../../src/lib/search.ts';
 
 describe('escapeLike', () => {
 	it('makes the LIKE wildcards literal (#13)', () => {
@@ -63,5 +70,20 @@ describe('scanId', () => {
 	it('is null without a volume or a page', () => {
 		expect(scanId(null, 3)).toBeNull();
 		expect(scanId('P-260-1_2a_1920', null)).toBeNull();
+	});
+});
+
+describe('csvLine (#28)', () => {
+	it('quotes fields with a comma, a quote or a line break', () => {
+		expect(csvLine(['Hodel', 'Metzger, Wirt', 'sagt "ja"', 'a\nb'])).toBe(
+			'Hodel,"Metzger, Wirt","sagt ""ja""","a\nb"\r\n'
+		);
+	});
+	it('leaves empty what is missing, and writes numbers as they are', () => {
+		expect(csvLine([1923, null, undefined, '', 0])).toBe('1923,,,,0\r\n');
+	});
+	it('keeps a spreadsheet program from reading a field as a formula', () => {
+		expect(csvLine(['=1+1', '-Frieden', '+41 31', '@x'])).toBe("'=1+1,'-Frieden,'+41 31,'@x\r\n");
+		expect(csvLine([-5])).toBe('-5\r\n');
 	});
 });

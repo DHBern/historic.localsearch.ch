@@ -131,5 +131,10 @@
 	"field_occupation": "Beruf oder Gewerbe aus der Liste",
 	"field_occupation_note": "Die Liste fasst Schreibweisen, Abkürzungen und Sprachen zusammen: «Landwirt» findet auch «Landw.», «agric.» und «agricoltore». Sie ist maschinell zugeordnet und erfasst etwa zwei Drittel der Einträge mit Berufsangabe; das Feld «Beruf» darüber sucht weiterhin im gedruckten Text.",
 	"field_occupation_unknown": "Bitte wählen Sie einen Beruf aus der Liste oder leeren Sie das Feld.",
-	"result_occupation": "Beruf/Gewerbe (normalisiert)"
+	"result_occupation": "Beruf/Gewerbe (normalisiert)",
+	"export_csv": "Als CSV herunterladen",
+	"export_loading": "CSV wird erstellt …",
+	"export_failed": "Der Export ist für diese Suche nicht möglich. Bitte grenzen Sie die Suche ein.",
+	"export_note": "Die Datei enthält alle Treffer (höchstens {max}) mit Band, Seite, Feldern und dem Link zum Seitenbild.",
+	"export_truncated": "Die Datei enthält die ersten {max} Treffer. Grenzen Sie die Jahre ein, um spätere Treffer zu exportieren."
 }

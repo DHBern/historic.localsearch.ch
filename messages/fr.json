@@ -131,5 +131,10 @@
 	"field_occupation": "Profession ou commerce de la liste",
 	"field_occupation_note": "La liste réunit graphies, abréviations et langues : « Landwirt » trouve aussi « Landw. », « agric. » et « agricoltore ». Elle est attribuée automatiquement et couvre environ deux tiers des inscriptions avec profession ; le champ « profession » ci-dessus cherche toujours dans le texte imprimé.",
 	"field_occupation_unknown": "Veuillez choisir une profession dans la liste ou vider le champ.",
-	"result_occupation": "Profession/commerce (normalisé)"
+	"result_occupation": "Profession/commerce (normalisé)",
+	"export_csv": "Télécharger en CSV",
+	"export_loading": "Préparation du CSV …",
+	"export_failed": "Cette recherche ne peut pas être exportée. Veuillez la restreindre.",
+	"export_note": "Le fichier contient tous les résultats (au plus {max}) avec le volume, la page, les champs et le lien vers l’image de la page.",
+	"export_truncated": "Le fichier contient les {max} premiers résultats. Restreignez les années pour exporter les suivants."
 }

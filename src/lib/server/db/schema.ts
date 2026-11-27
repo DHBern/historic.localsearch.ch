@@ -105,6 +105,30 @@ export const places = pgTable(
 	(table) => [primaryKey({ columns: [table.locality, table.file] })]
 );
 
+/**
+ * Where a locality string is when its volume alone does not say (#71): one row per string, volume and network
+ * of the entry ("Reinach" with "Aarg." and with "Bld."). A key of `places` has no row here.
+ */
+export const placesNet = pgTable(
+	'places_net',
+	{
+		locality: text().notNull(),
+		file: text().notNull(),
+		network: text().notNull(),
+		name: text().notNull(),
+		bfs: integer().notNull(),
+		municipality: text().notNull(),
+		canton: text().notNull(),
+		lat: real().notNull(),
+		lon: real().notNull(),
+		placeLat: real('place_lat').notNull(),
+		placeLon: real('place_lon').notNull(),
+		method: text().notNull(),
+		confidence: text().notNull()
+	},
+	(table) => [primaryKey({ columns: [table.locality, table.file, table.network] })]
+);
+
 /** Where a street string of a municipality is: filled by geo/build.sh for the towns in geo/street_towns.txt (#46). */
 export const streets = pgTable(
 	'streets',

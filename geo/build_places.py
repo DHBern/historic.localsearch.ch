@@ -1,6 +1,8 @@
 """Place table for the map (epic #42, issue #43): geo/build.sh runs this.
 
-  build_places.py COUNTS.tsv OUT_DIR        COUNTS: locality, file, year, entries (one row per locality and volume)
+  build_places.py COUNTS.tsv OUT_DIR [COUNTS_NET.tsv]
+      COUNTS: locality, file, year, entries (one row per locality and volume)
+      COUNTS_NET: locality, file, network, entries (one row per locality, volume and network; #71)
 
 Geocodes the locality STRINGS, not the entries. Every locality string of a volume gets the municipality of today
 it lies in (one circle per municipality of today, decision of 20.11.2026) and a point. Names are resolved with
@@ -17,6 +19,12 @@ How a place is found (column method), and how far to trust it (column confidence
   namensanfang ("Cheseaux" -> Cheseaux-sur-Lausanne)                                                  medium
   unscharf (similar spelling, for misreadings; with an exchange at most FUZZY_KM away),
   unscharf+bei-only (the town of a "bei" form found by a similar spelling)                            low
+
+A name that stays ambiguous for a volume ("Reinach" in a volume with both) is decided per entry where the entry
+itself says more: its field network names the canton ("Aarg.", "Bld.": name+canton, high), an area code ("064":
+the candidate nearest to where the undoubted entries of that code lie, name+code, medium) or the exchange
+("Egnach": name+exchange, high). These go to OUT_DIR/places_net_load.tsv for the table `places_net`, whose key
+is locality, volume and network (#71).
 
 Writes OUT_DIR/places.tsv (all keys, with the unplaced ones and why), OUT_DIR/places_load.tsv (the placed keys
 in the column order of the table `places`, for db/places.sql) and OUT_DIR/report.json.
@@ -45,13 +53,79 @@ JOINED = re.compile(r"\s(?:[bai]\.|bei|am|im)\s")
 SHORT = {"w thur": "Winterthur", "h buchsee": "Herzogenbuchsee", "n glatt": "Niederglatt", "f kappelen": "Frauenkappelen",
          "f kappel": "Frauenkappelen", "m buchsee": "Münchenbuchsee"}   # "Rickenbach b. W'thur"
 BIG = {"altdorf": "UR"}   # the register has no sizes: the capital of Uri, not the village of 200 in Schaffhausen
+CODE = re.compile(r"\b0\d\d\b")
+CODE_MIN = 30     # undoubted entries of an area code needed to say where it lies
+NET_CANTON = {**{k: v for k, v in _places.CANTON_HINTS.items() if len(k) > 2 or k in ("be", "so", "vd", "sg", "zh", "lu", "ag", "tg", "fr", "ne", "vs", "ti", "bl", "gl", "sh", "zg", "sz", "ow", "nw", "ur", "ar", "ai", "ge")},
+              "fbg": "FR", "gve": "GE", "grb": "GR", "obw": "OW", "nidw": "NW", "st g": "SG"}
 LEAD = 3.0        # among several places of one name: the largest wins if it is this many times larger
 
 
 def confidence(how):
     if how.startswith("unscharf"): return "low"
-    if how in ("exchange-only", "bei-only", "name+volume") or how.startswith("namensanfang"): return "medium"
+    if how in ("exchange-only", "bei-only", "name+volume", "name+code") or how.startswith("namensanfang"): return "medium"
     return "high"
+
+
+def net_parts(net):
+    """The field network of an entry: (canton or "", area code or "", the words without the code)."""
+    code = CODE.search(net)
+    words = re.sub(r"\(?\b0\d\d\b\)?|[()]", " ", net).strip(" .,")
+    toks = key(words.replace(".", ". ")).split()
+    canton = next((NET_CANTON[" ".join(toks[:n])] for n in (2, 1) if len(toks) >= n and " ".join(toks[:n]) in NET_CANTON), "")
+    return canton, code.group(0) if code else "", words
+
+
+def median(pairs):
+    """Weighted median of (value, weight)."""
+    pairs = sorted(pairs); half = sum(w for _, w in pairs) / 2; acc = 0
+    for v, w in pairs:
+        acc += w
+        if acc >= half: return v
+
+
+def by_network(R, counts_net, final, first, out):
+    """#71: the keys that stay ambiguous, decided per network of the entry. Returns a report."""
+    placed = {(loc, f): cand for loc, f, y, c, cand, how in final if cand and confidence(how) == "high"}
+    amb = {(loc, f): first[loc][2] for loc, f, y, c, cand, how in final if how == "ambiguous" and len(first[loc][2]) > 1}
+    pts = collections.defaultdict(list); todo = []          # (volume or "", code) -> [(lat, lon, entries)]
+    for l in open(counts_net, encoding="utf-8"):
+        loc, f, net, c = l.rstrip("\n").split("\t"); c = int(c)
+        canton, code, words = net_parts(net.replace("\\\\", "\\"))
+        if (loc, f) in amb: todo.append((loc, f, net, c, canton, code, words))
+        elif code and (loc, f) in placed:
+            p = placed[(loc, f)]
+            for k in ((f, code), ("", code)): pts[k].append((p["lat"], p["lon"], c))
+    centre = {k: (median([(a, w) for a, b, w in v]), median([(b, w) for a, b, w in v]))
+              for k, v in pts.items() if sum(w for a, b, w in v) >= CODE_MIN}
+    rep = collections.Counter(); rows = []
+
+    def nearest(alts, point, lim=NEAR_KM):
+        d = sorted((dist_km(a, point), i) for i, a in enumerate(alts))
+        if d[0][0] <= lim and (len(d) == 1 or (d[1][0] >= 2 * d[0][0] and d[1][0] - d[0][0] >= FUZZY_KM)): return alts[d[0][1]]
+
+    for loc, f, net, c, canton, code, words in todo:
+        alts = amb[(loc, f)]; cand = None; how = ""
+        rep["entries"] += c
+        if canton:
+            cs = [a for a in alts if a["canton"] == canton]
+            if cs: cand = R.pick(cs, "name", title(loc))[0]; how = "name+canton"
+        if not cand and code:
+            point = centre.get((f, code)) or centre.get(("", code))
+            if point: cand = nearest(alts, point); how = "name+code"
+        if not cand and words and not canton:
+            ex = R.exchange(words)
+            # the register does not have every hamlet: only a candidate close to the exchange ("Niederwil", Cham)
+            if ex: cand = nearest(alts, (ex["lat"], ex["lon"]), FUZZY_KM); how = "name+exchange"
+        if not cand: rep["open " + ("canton" if canton else "code" if code else "words" if words else "nothing")] += c; continue
+        rep["placed"] += c; rep["method " + how] += c
+        b = cand["bfs_today"].split(";")[0]; mn = R.mun.get(b)
+        rows.append((loc, f, net, cand["name"].replace("\t", " "), b, mn[0], cand["canton"], f'{mn[2]:.5f}', f'{mn[3]:.5f}',
+                     f'{cand["lat"]:.5f}', f'{cand["lon"]:.5f}', how, confidence(how), c))
+    with open(f"{out}/places_net_load.tsv", "w", encoding="utf-8") as fh:        # COPY text format; key columns as exported
+        for r in rows: fh.write("\t".join(str(v) for v in r[:-1]) + "\n")
+    with open(f"{out}/places_net.tsv", "w", encoding="utf-8") as fh:
+        for r in rows: fh.write("\t".join(str(v) for v in r) + "\n")
+    return dict(rep)
 
 
 def unaccent(s):
@@ -279,7 +353,8 @@ def main():
         esc = lambda v: str(v).replace("\\", "\\\\").replace("\t", " ")
         for r in rows:
             if r[3]: f.write("\t".join(esc(r[i]) for i in (0, 1, 2, 3, 4, 5, 8, 9, 6, 7, 10, 11)) + "\n")
-    rep = dict(rep); rep["by_decade"] = {d: dict(v) for d, v in sorted(bydec.items())}
+    net = by_network(R, sys.argv[3], final, first, out) if len(sys.argv) > 3 else None
+    rep = dict(rep); rep["by_network"] = net; rep["by_decade"] = {d: dict(v) for d, v in sorted(bydec.items())}
     json.dump(rep, open(f"{out}/report.json", "w"), indent=1, ensure_ascii=False)
     E = rep["entries"]
     print(f'strings {len(n)}, keys (string and volume) {rep["keys"]}, entries {E}')
@@ -293,6 +368,7 @@ def main():
         for r in rows:
             if r[-3] == cls: t[r[0]] += r[-1]
         print("top", cls, t.most_common(40))
+    if net: print("by network (#71):", net)
 
 
 if __name__ == "__main__":

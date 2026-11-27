@@ -13,6 +13,8 @@ psql -X -q -v ON_ERROR_STOP=1 -c "\copy records (entityname1, entityname2, suppl
 psql -X -q -v ON_ERROR_STOP=1 -c "\\copy records (entityname1, entityname2, supplement, street, locality, phonenumber, year, page, file, network, aggregatedcontent) from 'records_buser.tsv'"
 # entries of a re-read volume, with kind, title and alliance (#58)
 psql -X -q -v ON_ERROR_STOP=1 -c "\copy records (entityname1, entityname2, supplement, street, locality, phonenumber, year, page, file, network, aggregatedcontent, kind, title, alliance) from 'records_1938.tsv'"
+# a place name that one volume holds twice: Reinach in Aargau and in Baselland, told apart by the network (#71)
+psql -X -q -v ON_ERROR_STOP=1 -c "\copy records (entityname1, entityname2, supplement, street, locality, phonenumber, year, page, file, network, aggregatedcontent, kind, title, alliance) from 'records_reinach.tsv'"
 psql -X -q -v ON_ERROR_STOP=1 -f indexes.sql
 # the per-volume summary, with the same script production uses
 psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS volumes" -f ../../db/volumes.sql >/dev/null
@@ -26,4 +28,5 @@ psql -X -t -c "select count(occupations) || ' entries with an occupation' from r
 # the place table for the map, with the same scripts production uses
 GEO_OUT="$(mktemp -d)" ../../geo/build.sh >/dev/null
 psql -X -t -c "select count(*) || ' place keys loaded' from places"
+psql -X -t -c "select count(*) || ' place keys with a network loaded' from places_net"
 psql -X -t -c "select count(*) || ' rows loaded' from records"

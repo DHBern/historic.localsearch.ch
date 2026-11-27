@@ -155,5 +155,9 @@
 	"sort_year": "nach Jahr",
 	"sort_name": "nach Name",
 	"sort_locality": "nach Ort",
-	"result_year": "Jahr"
+	"result_year": "Jahr",
+	"field_code": "Netzgruppe (Vorwahl)",
+	"field_code_all": "alle",
+	"field_code_note": "{share} % der Einträge dieser Jahre haben eine Vorwahl: die mit dem Eintrag gedruckte (ab 1938), sonst die ihres Ortes. Einträge ohne Vorwahl findet diese Auswahl nicht.",
+	"field_code_hint": "Ab 1930 als erstem Jahr lässt sich die Suche auf eine Netzgruppe (Vorwahl) einschränken."
 }

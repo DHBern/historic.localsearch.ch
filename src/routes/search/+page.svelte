@@ -123,6 +123,24 @@
 	let bookUnknown = $state(false);
 	let bookInfoOpen = $state(false);
 	const bookId = $derived(bookByLabel.get(bookText.trim().toLowerCase()) ?? '');
+	// the area codes a search from 1930 on can be limited to (#50), with their entries in the years searched
+	const CODE_FIRST_YEAR = 1930;
+	const codeOffered = $derived(from >= CODE_FIRST_YEAR && (data.areaCodes?.codes.length ?? 0) > 0);
+	const span = (years: Record<number, number>) => {
+		let n = 0;
+		for (let year = Math.max(from, CODE_FIRST_YEAR); year <= to; year++) n += years[year] ?? 0;
+		return n;
+	};
+	const codeOptions = $derived(
+		(data.areaCodes?.codes ?? [])
+			.map((c) => ({ code: c.code, place: c.place, n: span(c.years) }))
+			.filter((c) => c.n > 0)
+	);
+	// how many entries of the years searched carry a code, in per cent
+	const codeShare = $derived.by(() => {
+		const all = span(data.areaCodes?.totals ?? {});
+		return all ? Math.round((100 * codeOptions.reduce((sum, c) => sum + c.n, 0)) / all) : 0;
+	});
 	const occupationLabels = (ids: string[]) =>
 		ids
 			.map((id) => (occupationById.get(id) ? occupationName(occupationById.get(id)!) : id))
@@ -393,6 +411,23 @@
 					<p class="pt-1 text-sm" role="alert" data-testid="book-unknown">{m.book_unknown()}</p>
 				{/if}
 			</div>
+			<!-- limit to a network group by its area code (#50): only for searches from 1930 on -->
+			{#if codeOffered}
+				<label class="mt-2 block">
+					<span>{m.field_code()}</span>
+					<select name="code" data-testid="code">
+						<option value="">{m.field_code_all()}</option>
+						{#each codeOptions as c (c.code)}
+							<option value={c.code}>{c.code} {c.place} ({formatNumber(c.n)})</option>
+						{/each}
+					</select>
+				</label>
+				<p class="pt-2 text-sm" data-testid="code-note">
+					{m.field_code_note({ share: codeShare })}
+				</p>
+			{:else}
+				<p class="pt-2 text-sm" data-testid="code-hint">{m.field_code_hint()}</p>
+			{/if}
 			<!-- the order of the list (#23) -->
 			<label class="mt-2 block">
 				<span>{m.sort_label()}</span>

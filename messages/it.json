@@ -155,5 +155,9 @@
 	"sort_year": "per anno",
 	"sort_name": "per nome",
 	"sort_locality": "per località",
-	"result_year": "Anno"
+	"result_year": "Anno",
+	"field_code": "Gruppo di reti (prefisso)",
+	"field_code_all": "tutti",
+	"field_code_note": "Il {share} % delle iscrizioni di questi anni ha un prefisso: quello stampato con l’iscrizione (dal 1938), altrimenti quello della località. Questa scelta non trova le iscrizioni senza prefisso.",
+	"field_code_hint": "Con il 1930 o più tardi come primo anno, la ricerca può essere limitata a un gruppo di reti (prefisso)."
 }

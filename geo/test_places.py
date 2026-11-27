@@ -22,7 +22,7 @@ class Places(unittest.TestCase):
         self.assertEqual(where("Oberhofen a. Th.")[0], "Oberhofen am Thunersee")
 
     def test_the_area_of_a_volume_is_its_places_with_a_margin(self):                     # #73
-        counts = {"Bern": 1000, "Thun": 300, "Spiez": 50, "Wileroltigen": 5, "Kerzers": 5, "Erlenbach": 5, "Lugano": 3,
+        counts = {"Bern": 3000, "Thun": 300, "Spiez": 50, "Wileroltigen": 5, "Kerzers": 5, "Erlenbach": 5, "Lugano": 3,
                   "Kerzcers": 2}
         with tempfile.TemporaryDirectory() as d:
             with open(d + "/c.tsv", "w", encoding="utf-8") as f:

@@ -156,5 +156,9 @@
 	"sort_year": "by year",
 	"sort_name": "by name",
 	"sort_locality": "by place",
-	"result_year": "Year"
+	"result_year": "Year",
+	"field_code": "Network group (area code)",
+	"field_code_all": "all",
+	"field_code_note": "{share} % of the entries of these years have an area code: the one printed with the entry (from 1938), else that of their place. This choice does not find entries without one.",
+	"field_code_hint": "With 1930 or later as the first year, the search can be limited to a network group (area code)."
 }

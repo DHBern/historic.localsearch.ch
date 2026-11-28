@@ -105,6 +105,7 @@ const FILE_PARTS: [field: string, label: string][] = [
 	['occupation', 'beruf'],
 	['kind', 'art'],
 	['book', 'buch'],
+	['code', 'vorwahl'],
 	['place', 'gemeinde']
 ];
 

@@ -1,5 +1,5 @@
 // The conditions of a search, shared by the result list, the map and the export (#28).
-import { bookFiles, places, placesNet, records } from '#lib/server/db/schema.ts';
+import { bookFiles, placeCodes, places, placesNet, records } from '#lib/server/db/schema.ts';
 import { and, asc, between, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { MAX_LENGTH, MIN_LENGTH, escapeLike } from '#lib/search.ts';
@@ -11,6 +11,8 @@ import { MAX_LENGTH, MIN_LENGTH, escapeLike } from '#lib/search.ts';
 export const networkKey = sql`case when ${records.network} is null or btrim(${records.network}) = '' then '' else ${records.network} end`;
 
 export const FIRST_YEAR = 1880;
+/** The limit to an area code is offered for searches that start in this year or later (#50). */
+export const CODE_FIRST_YEAR = 1930;
 export const LAST_YEAR = 1950;
 
 const fieldNames = [
@@ -161,6 +163,21 @@ export function criteria(formData: FormData, withPlace: boolean) {
 		where = and(
 			where,
 			sql`${records.file} in (select ${bookFiles.file} from ${bookFiles} where ${bookFiles.book} = ${book})`
+		);
+	}
+	// limit to a network group by its area code (#50), for searches from 1930 on: the code printed with the entry
+	// ("064"), else the code of its place (`place_codes`). An entry without either is not found.
+	const code = text(formData.get('code'));
+	if (code !== '') {
+		if (!/^0\d\d$/.test(code)) return { error: 'invalid_code' as const };
+		if (from < CODE_FIRST_YEAR) return { error: 'code_too_early' as const };
+		const ofPlace = (table: typeof places | typeof placesNet, more: SQL) =>
+			sql`(select ${placeCodes.code} from ${table} join ${placeCodes} on ${placeCodes.bfs} = ${table.bfs}
+				where ${table.locality} = ${records.locality} and ${table.file} = ${records.file}${more})`;
+		where = and(
+			where,
+			sql`coalesce(substring(${records.network} from '\\m0\\d\\d\\M'), ${ofPlace(places, sql``)},
+				${ofPlace(placesNet, sql` and ${placesNet.network} = ${networkKey}`)}) = ${code}`
 		);
 	}
 	const sort = text(formData.get('sort')) || 'year';

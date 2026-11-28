@@ -155,5 +155,9 @@
 	"sort_year": "par année",
 	"sort_name": "par nom",
 	"sort_locality": "par localité",
-	"result_year": "Année"
+	"result_year": "Année",
+	"field_code": "Groupe de réseaux (indicatif)",
+	"field_code_all": "tous",
+	"field_code_note": "{share} % des inscriptions de ces années ont un indicatif : celui imprimé avec l’inscription (dès 1938), sinon celui de leur localité. Ce choix ne trouve pas les inscriptions sans indicatif.",
+	"field_code_hint": "Avec 1930 ou plus tard comme première année, la recherche peut être limitée à un groupe de réseaux (indicatif)."
 }

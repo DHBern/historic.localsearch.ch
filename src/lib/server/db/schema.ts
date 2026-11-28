@@ -113,6 +113,21 @@ export const bookFiles = pgTable(
 	(table) => [primaryKey({ columns: [table.book, table.file] })]
 );
 
+/** The area code of a municipality of today, filled by db/area_codes.sql after geo/build.sh (#50). */
+export const placeCodes = pgTable('place_codes', {
+	bfs: integer().primaryKey(),
+	code: text().notNull(),
+	municipality: text().notNull(),
+	entries: integer().notNull()
+});
+
+/** Entries per year and area code (their own, or that of their place), for the form. */
+export const codeYears = pgTable(
+	'code_years',
+	{ year: integer().notNull(), code: text().notNull(), entries: integer().notNull() },
+	(table) => [primaryKey({ columns: [table.year, table.code] })]
+);
+
 /** Where a locality string of a volume is: filled by geo/build.sh after every import (#43). */
 export const places = pgTable(
 	'places',

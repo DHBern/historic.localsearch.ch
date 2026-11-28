@@ -2,6 +2,8 @@ import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
 import {
 	books,
+	codeYears,
+	placeCodes,
 	occupationRegister,
 	places,
 	placesNet,
@@ -12,7 +14,7 @@ import {
 import { and, asc, count, eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { MAX_ROWS, excerpt } from '#lib/search.ts';
-import { approxSetup, criteria, networkKey } from '#lib/server/criteria.ts';
+import { CODE_FIRST_YEAR, approxSetup, criteria, networkKey } from '#lib/server/criteria.ts';
 
 // counting the hits of a very broad search must not hold up the answer
 const COUNT_TIMEOUT_MS = 4000;
@@ -206,6 +208,45 @@ async function bookList() {
 }
 
 /**
+ * The area codes a search from 1930 on can be limited to (#50): per code its largest place and the entries per
+ * year, and the entries of every year, so that the form can say how many of them carry a code. Empty if the
+ * tables are missing.
+ */
+async function codeList() {
+	try {
+		const db = getDb();
+		const counts = await db
+			.select()
+			.from(codeYears)
+			.orderBy(asc(codeYears.code), asc(codeYears.year));
+		const towns = await db
+			.selectDistinctOn([placeCodes.code], {
+				code: placeCodes.code,
+				place: placeCodes.municipality
+			})
+			.from(placeCodes)
+			.orderBy(asc(placeCodes.code), sql`${placeCodes.entries} desc`);
+		const totals = await db
+			.select({ year: volumes.year, entries: sql<number>`sum(${volumes.entries})`.mapWith(Number) })
+			.from(volumes)
+			.where(sql`${volumes.year} >= ${CODE_FIRST_YEAR}`)
+			.groupBy(volumes.year);
+		const place = new Map(towns.map((t) => [t.code, t.place]));
+		const byCode = new Map<string, Record<number, number>>();
+		for (const c of counts) {
+			if (!byCode.has(c.code)) byCode.set(c.code, {});
+			byCode.get(c.code)![c.year] = c.entries;
+		}
+		return {
+			codes: [...byCode].map(([code, years]) => ({ code, place: place.get(code) ?? '', years })),
+			totals: Object.fromEntries(totals.map((t) => [t.year, t.entries])) as Record<number, number>
+		};
+	} catch {
+		return { codes: [], totals: {} as Record<number, number> };
+	}
+}
+
+/**
  * Which years from 1938 on can be searched by field: all their volumes, or only some (the others are still
  * text only). From the table `volumes`, so the form follows the imports by itself.
  */
@@ -225,6 +266,7 @@ export const load: PageServerLoad = async () => {
 		return {
 			occupations,
 			books: await bookList(),
+			areaCodes: await codeList(),
 			fieldYears: {
 				full: rows.filter((r) => r.withFields === r.all).map((r) => r.year),
 				partial: rows.filter((r) => r.withFields > 0 && r.withFields < r.all).map((r) => r.year)
@@ -232,7 +274,7 @@ export const load: PageServerLoad = async () => {
 		};
 	} catch {
 		// no table, no database (preview builds): the form works without the note
-		return { fieldYears: null, occupations: [], books: [] };
+		return { fieldYears: null, occupations: [], books: [], areaCodes: { codes: [], totals: {} } };
 	}
 };
 

@@ -18,6 +18,6 @@ psql -X -q -v ON_ERROR_STOP=1 -v placesnetfile="$OUT/places_net_load.tsv" -f db/
 
 # street points: the street strings of the entries the place table puts in the listed municipalities
 TOWNS=$(grep -v '^#' geo/street_towns.txt | cut -f1 | paste -sd, -)
-psql -X -q -v ON_ERROR_STOP=1 -c "\\copy (SELECT p.bfs, r.street, count(*) FROM records r JOIN (SELECT locality, file, NULL AS network, bfs FROM places UNION ALL SELECT locality, file, network, bfs FROM places_net) p ON p.locality = r.locality AND p.file = r.file AND (p.network IS NULL OR p.network = r.network) WHERE p.bfs IN ($TOWNS) AND r.street IS NOT NULL AND btrim(r.street) <> '' GROUP BY 1, 2) TO '$OUT/streets.tsv'"
+psql -X -q -v ON_ERROR_STOP=1 -c "\\copy (SELECT p.bfs, r.street, count(*) FROM records r JOIN (SELECT locality, file, NULL AS network, bfs FROM places UNION ALL SELECT locality, file, network, bfs FROM places_net) p ON p.locality = r.locality AND p.file = r.file AND (p.network IS NULL OR p.network = CASE WHEN r.network IS NULL OR btrim(r.network) = '' THEN '' ELSE r.network END) WHERE p.bfs IN ($TOWNS) AND r.street IS NOT NULL AND btrim(r.street) <> '' GROUP BY 1, 2) TO '$OUT/streets.tsv'"
 python3 geo/build_streets.py "$OUT/streets.tsv" "$OUT"
 psql -X -q -v ON_ERROR_STOP=1 -v streetsfile="$OUT/streets_load.tsv" -f db/streets.sql

@@ -17,7 +17,7 @@ afterAll(() => sql.end());
 describe('fixture database', () => {
 	it('holds the fixture rows', async () => {
 		const [{ n }] = await sql`select count(*)::int n from records`;
-		expect(n).toBe(3666);
+		expect(n).toBe(3700);
 	});
 
 	it('has the trigram extension the search needs', async () => {

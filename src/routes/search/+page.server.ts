@@ -14,7 +14,7 @@ import {
 import { and, asc, count, eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { MAX_ROWS, excerpt } from '#lib/search.ts';
-import { CODE_FIRST_YEAR, approxSetup, criteria } from '#lib/server/criteria.ts';
+import { CODE_FIRST_YEAR, approxSetup, criteria, networkKey } from '#lib/server/criteria.ts';
 
 // counting the hits of a very broad search must not hold up the answer
 const COUNT_TIMEOUT_MS = 4000;
@@ -100,7 +100,7 @@ async function placeCounts(where: SQL | undefined, approx: boolean) {
 				and(
 					eq(placesNet.locality, records.locality),
 					eq(placesNet.file, records.file),
-					eq(placesNet.network, records.network)
+					sql`${placesNet.network} = ${networkKey}`
 				)
 			)
 			.where(where)

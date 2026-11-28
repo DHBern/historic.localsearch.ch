@@ -44,7 +44,7 @@ FROM (
 	                (SELECT c.code FROM place_codes c WHERE c.bfs = coalesce(p.bfs, n.bfs))) AS code
 	FROM records r
 	LEFT JOIN places p ON p.locality = r.locality AND p.file = r.file
-	LEFT JOIN places_net n ON n.locality = r.locality AND n.file = r.file AND n.network = r.network
+	LEFT JOIN places_net n ON n.locality = r.locality AND n.file = r.file AND n.network = CASE WHEN r.network IS NULL OR btrim(r.network) = '' THEN '' ELSE r.network END
 	WHERE r.year >= 1930
 ) e
 WHERE code IS NOT NULL

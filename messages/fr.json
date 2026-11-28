@@ -141,5 +141,19 @@
 	"search_mode_note": "« Approximative » trouve aussi les mots d’orthographe proche, par exemple des erreurs de lecture de la reconnaissance de texte (« Hodei » pour « Hodel »). Le terme doit compter au moins 4 caractères.",
 	"result_similarity": "Similarité",
 	"approx_too_short": "Pour la recherche approximative, veuillez saisir au moins 4 caractères.",
-	"approx_too_broad": "La recherche approximative a pris trop de temps pour ce mot. Veuillez restreindre les années ou chercher exactement."
+	"approx_too_broad": "La recherche approximative a pris trop de temps pour ce mot. Veuillez restreindre les années ou chercher exactement.",
+	"field_book": "Annuaire",
+	"field_book_all": "tous les annuaires",
+	"book_info_label": "Qu’est-ce qu’un annuaire ?",
+	"book_info": "Jusqu’en 1910, chaque réseau téléphonique avait son propre annuaire (Bâle, Berne, Zurich …). Dès 1911, la Suisse paraît en trois volumes par an : 1 Suisse romande, 2 centre et Tessin, 3 Suisse orientale ; certaines années divisent un volume en a et b. Un annuaire pour deux réseaux (« Bern / Val-de-Travers ») compte pour les deux.",
+	"book_unknown": "Cet annuaire n’existe pas. Veuillez en choisir un dans la liste ou vider le champ.",
+	"book_volume": "Volume {n}",
+	"book_region_1": "Suisse romande",
+	"book_region_2": "Berne, Bâle, Argovie, Suisse centrale, Tessin",
+	"book_region_3": "Zurich, Suisse orientale, Grisons",
+	"sort_label": "Tri",
+	"sort_year": "par année",
+	"sort_name": "par nom",
+	"sort_locality": "par localité",
+	"result_year": "Année"
 }

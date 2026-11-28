@@ -23,6 +23,8 @@ psql -X -q -v ON_ERROR_STOP=1 -c "\\copy records (entityname1, entityname2, supp
 psql -X -q -v ON_ERROR_STOP=1 -f indexes.sql
 # the per-volume summary, with the same script production uses
 psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS volumes" -f ../../db/volumes.sql >/dev/null
+# the books a search can be limited to (#50), from the volumes
+psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS books, book_files" -f ../../db/books.sql >/dev/null
 # title, second line and wife's family name of the older volumes, by the rules production uses (#58).
 # The fixture is small: a surname counts from 3 entries of its own.
 psql -X -q -v ON_ERROR_STOP=1 -v min_count=3 -f ../../db/subscriber_info.sql >/dev/null

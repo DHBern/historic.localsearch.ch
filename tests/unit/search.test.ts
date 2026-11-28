@@ -102,6 +102,11 @@ describe('exportFileName (#28)', () => {
 			exportFileName(form({ entityname1: 'Hodel', locality: 'Bern', from: '1919', to: '1920' }), at)
 		).toBe('historic-localsearch_name-Hodel_ort-Bern_1919-1920_2026-11-27_1905.csv');
 	});
+	it('names the book the search was limited to (#50)', () => {
+		expect(exportFileName(form({ entityname1: 'Hodel', book: 'St. Gallen' }), at)).toBe(
+			'historic-localsearch_name-Hodel_buch-St-Gallen_1880-1950_2026-11-27_1905.csv'
+		);
+	});
 	it('says so when the search was approximate, and uses summer time in summer', () => {
 		expect(
 			exportFileName(

@@ -104,6 +104,7 @@ const FILE_PARTS: [field: string, label: string][] = [
 	['alliance', 'allianz'],
 	['occupation', 'beruf'],
 	['kind', 'art'],
+	['book', 'buch'],
 	['place', 'gemeinde']
 ];
 

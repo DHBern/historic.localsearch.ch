@@ -1,6 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '#lib/server/db/index.ts';
 import {
+	books,
 	occupationRegister,
 	places,
 	placesNet,
@@ -19,12 +20,11 @@ const COUNT_TIMEOUT_MS = 4000;
 const APPROX_TIMEOUT_MS = 20000;
 
 /**
- * Up to MAX_ROWS entries, oldest first, and the number of all hits (null if unknown). An approximate search
+ * Up to MAX_ROWS entries in the order asked for, and the number of all hits (null if unknown). An approximate search
  * (#26) also says of every entry how much it resembles the term (`similarity`, 1 = as typed).
  */
-async function run(where: SQL | undefined, similarity?: SQL<number>) {
+async function run(where: SQL | undefined, order: SQL[], similarity?: SQL<number>) {
 	const db = getDb();
-	const order = [asc(records.year), asc(records.file), asc(records.page)];
 	const rows = similarity
 		? await db.transaction(async (tx) => {
 				await tx.execute(approxSetup);
@@ -187,6 +187,24 @@ async function occupationList() {
 	}
 }
 
+/** The books a search can be limited to, for the suggestions in the form; empty if the table is missing (#50). */
+async function bookList() {
+	try {
+		return await getDb()
+			.select({
+				book: books.book,
+				kind: books.kind,
+				years: books.years,
+				firstYear: books.firstYear,
+				lastYear: books.lastYear
+			})
+			.from(books)
+			.orderBy(asc(books.kind), asc(books.book));
+	} catch {
+		return [];
+	}
+}
+
 /**
  * Which years from 1938 on can be searched by field: all their volumes, or only some (the others are still
  * text only). From the table `volumes`, so the form follows the imports by itself.
@@ -206,6 +224,7 @@ export const load: PageServerLoad = async () => {
 		const occupations = await occupationList();
 		return {
 			occupations,
+			books: await bookList(),
 			fieldYears: {
 				full: rows.filter((r) => r.withFields === r.all).map((r) => r.year),
 				partial: rows.filter((r) => r.withFields > 0 && r.withFields < r.all).map((r) => r.year)
@@ -213,7 +232,7 @@ export const load: PageServerLoad = async () => {
 		};
 	} catch {
 		// no table, no database (preview builds): the form works without the note
-		return { fieldYears: null, occupations: [] };
+		return { fieldYears: null, occupations: [], books: [] };
 	}
 };
 
@@ -221,10 +240,10 @@ export const actions: Actions = {
 	search: async (event) => {
 		const found = criteria(await event.request.formData(), true);
 		if ('error' in found) return fail(400, { error: found.error });
-		const { where, searchString, similarity } = found;
+		const { where, searchString, similarity, order, sort } = found;
 
 		try {
-			const { rows, total } = await run(where, similarity);
+			const { rows, total } = await run(where, order, similarity);
 			// the entry text goes to the page as HTML: escaped, hits marked
 			const results = rows.map((row) => ({
 				...row,
@@ -232,7 +251,7 @@ export const actions: Actions = {
 					? excerpt(row.aggregatedcontent, searchString)
 					: row.aggregatedcontent
 			}));
-			return { results, total };
+			return { results, total, sort };
 		} catch (e) {
 			console.error('search failed', e);
 			// an approximate search that ran out of time: say what helps

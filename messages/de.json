@@ -141,5 +141,19 @@
 	"search_mode_note": "«Ungefähr» findet auch ähnlich geschriebene Wörter, etwa Lesefehler der Texterkennung («Hodei» für «Hodel»). Das Suchwort braucht dafür mindestens 4 Zeichen.",
 	"result_similarity": "Ähnlichkeit",
 	"approx_too_short": "Für die ungefähre Suche geben Sie bitte mindestens 4 Zeichen ein.",
-	"approx_too_broad": "Die ungefähre Suche hat für dieses Wort zu lange gedauert. Bitte grenzen Sie die Jahre ein oder suchen Sie genau."
+	"approx_too_broad": "Die ungefähre Suche hat für dieses Wort zu lange gedauert. Bitte grenzen Sie die Jahre ein oder suchen Sie genau.",
+	"field_book": "Buch",
+	"field_book_all": "alle Bücher",
+	"book_info_label": "Was ist ein Buch?",
+	"book_info": "Bis 1910 hatte jedes Telefonnetz sein eigenes Buch (Basel, Bern, Zürich …). Ab 1911 erscheint die Schweiz in drei Bänden pro Jahr: 1 Westschweiz, 2 Mitte und Tessin, 3 Ostschweiz; einzelne Jahre teilen einen Band in a und b. Ein Buch für zwei Netze («Bern / Val-de-Travers») zählt zu beiden.",
+	"book_unknown": "Dieses Buch gibt es nicht. Bitte eines aus der Liste wählen oder das Feld leeren.",
+	"book_volume": "Band {n}",
+	"book_region_1": "Westschweiz",
+	"book_region_2": "Bern, Basel, Aargau, Zentralschweiz, Tessin",
+	"book_region_3": "Zürich, Ostschweiz, Graubünden",
+	"sort_label": "Sortierung",
+	"sort_year": "nach Jahr",
+	"sort_name": "nach Name",
+	"sort_locality": "nach Ort",
+	"result_year": "Jahr"
 }

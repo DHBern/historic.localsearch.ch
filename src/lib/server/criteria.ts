@@ -4,6 +4,12 @@ import { and, between, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { MAX_LENGTH, MIN_LENGTH, escapeLike } from '#lib/search.ts';
 
+/**
+ * The network of an entry as the key of `places_net`: entries without one have the key '' there (a name the
+ * volume holds twice, decided for the entries whose heading was read without its canton; #71).
+ */
+export const networkKey = sql`case when ${records.network} is null or btrim(${records.network}) = '' then '' else ${records.network} end`;
+
 export const FIRST_YEAR = 1880;
 export const LAST_YEAR = 1950;
 
@@ -135,7 +141,7 @@ export function criteria(formData: FormData, withPlace: boolean) {
 		where = and(
 			where,
 			sql`(exists (select 1 from ${places} where ${places.locality} = ${records.locality} and ${places.file} = ${records.file} and ${places.bfs} = ${bfs})
-				or exists (select 1 from ${placesNet} where ${placesNet.locality} = ${records.locality} and ${placesNet.file} = ${records.file} and ${placesNet.network} = ${records.network} and ${placesNet.bfs} = ${bfs}))`
+				or exists (select 1 from ${placesNet} where ${placesNet.locality} = ${records.locality} and ${placesNet.file} = ${records.file} and ${placesNet.network} = ${networkKey} and ${placesNet.bfs} = ${bfs}))`
 		);
 	}
 	// how near a hit is to what was typed: every field must match, so the weakest one counts

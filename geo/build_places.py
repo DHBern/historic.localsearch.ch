@@ -29,11 +29,18 @@ siehe Lenk i." is shown at Lenk), a name turned round ("Stammheim, Ober-", "Tour
 instead of a canton ("Moutier Jura Bernois"), two languages ("Scuol / Schuls"), an abbreviation that broke off
 ("Langnau i."). Liechtenstein and Campione are out of region.
 
+Names the register does not have under the printed form are decided by hand in ref/printed_names.csv ("Schönbühl"
+is Urtenen-Schönbühl, "Rigi" is shown at Rigi Kulm; method alias, high). A string that is only placed at its
+exchange is placed at the hamlet of its name instead, if ref/hamlets.csv has one within FUZZY_KM of the exchange
+(weiler+exchange, medium).
+
 A name that stays ambiguous for a volume ("Reinach" in a volume with both) is decided per entry where the entry
 itself says more: its field network names the canton ("Aarg.", "Bld.": name+canton, high), an area code ("064":
 the candidate nearest to where the undoubted entries of that code lie, name+code, medium) or the exchange
-("Egnach": name+exchange, high). These go to OUT_DIR/places_net_load.tsv for the table `places_net`, whose key
-is locality, volume and network (#71).
+("Egnach": name+exchange, high). The entries the network does not decide go to the place of the name that is
+far larger than the others, measured on the decided entries of the same region (name+size, medium: "Wil" with
+400 entries is the town in St. Gallen). These go to OUT_DIR/places_net_load.tsv for the table `places_net`, whose key
+is locality, volume and network ('' for an entry without one; #71).
 
 Writes OUT_DIR/places.tsv (all keys, with the unplaced ones and why), OUT_DIR/places_load.tsv (the placed keys
 in the column order of the table `places`, for db/places.sql) and OUT_DIR/report.json.
@@ -43,7 +50,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gazetteer as _places                                     # noqa: E402
 from gazetteer import Gazetteer, split_locality, key, dist_km, REF   # noqa: E402
 _places.CANTON_HINTS.update({"f": "FR", "n": "NE", "v": "VD", "g": "GE", "frbg": "FR", "nch": "NE", "t": "TI", "tic": "TI",
-                             "ticino": "TI", "s": "SO", "a": "AG", "l": "LU", "th": "TG", "gris": "GR", "jb": "BE"})
+                             "ticino": "TI", "s": "SO", "a": "AG", "l": "LU", "th": "TG", "gris": "GR", "jb": "BE",
+                             "b l": "BL", "baseli": "BL", "soloth": "SO", "freib": "FR", "fbg": "FR"})
 
 NET = re.compile(r"^(.*?)[,;]?\s+(?:Netz|Netzgruppe|réseau|reseau|rete|groupe|Gruppe|gruppo)\s+(.+)$", re.I)
 FUZZY_KM = 15     # ... and this near if the name only resembles the place
@@ -55,9 +63,11 @@ ALIAS = {"bienne": "Biel|BE", "biel bienne": "Biel|BE", "geneve": "Genève", "ge
          "freiburg": "Fribourg", "sitten": "Sion", "siders": "Sierre", "pruntrut": "Porrentruy", "delsberg": "Delémont",
          "st gallen": "St. Gallen", "montana vermala": "Montana", "hasle ruegsau": "Hasle b. Burgdorf",
          "neukirch i": "Neukirch (Egnach)", "neukirch i e": "Neukirch (Egnach)"}   # "im Egnach": its hamlets say so (#27)
+# #27: names decided by hand, for places the register does not have under the printed name (ref/printed_names.csv)
+PRINTED = {key(r["printed"]): f'{r["place"]}|{r["canton"]}' for r in csv.DictReader(open(REF / "printed_names.csv", encoding="utf-8"))}
 EXPAND = [(r"\ba\.\s?A\.?$", "an der Aare"), (r"\ba\.\s?Rh\.?$", "am Rhein"), (r"\bi\.\s?E\.?$", "im Emmental"),
           (r"\ba\.\s?S\.?$", "am See"), (r"\ba\.\s?A(?:lbis)?\.?$", "am Albis"), (r"\ba\.\s?I\.?$", "am Irchel"),
-          (r"\bb\.\s", "bei "), (r"\bi\.\s?S\.?$", "im Simmental"), (r"\ba\.\s?d\.\s?", "an der ")]
+          (r"\bb\.\s", "bei "), (r"\ba\.\s?Aare$", "an der Aare"), (r"\bi\.\s?S\.?$", "im Simmental"), (r"\ba\.\s?d\.\s?", "an der ")]
 MAIN_SHARE, EDGE_SHARE = 50, 10   # share of a postcode area in a municipality (per cent): its seat, and a mere edge
 BEI = re.compile(r"^(.+?)(?:,?\s+(?:b\.|bei)|(?<!,)\s+B\.)\s+(.+)$")   # "Lengnau B. Biel" too, but not "Rothenfluh, B. L."
 JOINED = re.compile(r"\s(?:[bai]\.|bei|am|im)\s")
@@ -66,6 +76,7 @@ SHORT = {"w thur": "Winterthur", "h buchsee": "Herzogenbuchsee", "n glatt": "Nie
 BIG = {"altdorf": "UR"}   # the register has no sizes: the capital of Uri, not the village of 200 in Schaffhausen
 CODE = re.compile(r"\b0\d\d\b")
 CODE_MIN = 30     # undoubted entries of an area code needed to say where it lies
+SIZE_MIN, SIZE_LEAD = 20, 5   # name+size: undecided entries of a name in a volume, and how many times the other places' most
 NET_CANTON = {**{k: v for k, v in _places.CANTON_HINTS.items() if len(k) > 2 or k in ("be", "so", "vd", "sg", "zh", "lu", "ag", "tg", "fr", "ne", "vs", "ti", "bl", "gl", "sh", "zg", "sz", "ow", "nw", "ur", "ar", "ai", "ge")},
               "fbg": "FR", "gve": "GE", "grb": "GR", "obw": "OW", "nidw": "NW", "st g": "SG"}
 # #27: other ways to read a string the register does not know as it stands
@@ -75,6 +86,7 @@ AREA = [(r"\s+(?:Jura Bernois|Berner Jura|J\. ?B\.)$", "Bern"), (r"\s+St\.? ?Gal
         (r"\s+Z[üu]richsee$", "Zch."), (r"\s+Obwalden$", "OW"), (r"\s+Nidwalden$", "NW"), (r"\s+Mesolcina$", "Graub."),
         (r"\s+Ne[nu][ec]h\.?$", "Neuch."), (r"\s+Eng(?:adin)?\.?$", "Graub."), (r"\s+Wall?is$|\s+Wai\.$", "Wallis")]
 ABROAD = re.compile(r"F[üu]rstent(?:um|\.)?\s+Liechtenstein|\bd['’]Italia$", re.I)
+TAIL = re.compile(r"\s+(?:Gruppe|Werktage:?|Netz)$")   # "Frauenfeld Gruppe", "Hinwil Werktage:", "Laupen Zch. Netz": the heading went on
 CUT = re.compile(r"\s+[iab]\.?$")       # "Neukirch i.", "Oetwil a.": the abbreviation broke off
 
 
@@ -87,6 +99,7 @@ def variants(s, full):
     if m: out.append((m.group(2) + m.group(1).lower() if m.group(1) else f"{m.group(4)} {m.group(3)}".replace("’ ", "’").replace("' ", "'"), False))
     for rx, hint in AREA:
         if re.search(rx, s, re.I): out.append((re.sub(rx, "", s, flags=re.I) + ", " + hint, False))
+    if TAIL.search(s): out.append((TAIL.sub("", s), False))
     if "/" in s: out += [(p.strip(), False) for p in s.split("/") if len(p.strip()) > 2]
     if CUT.search(s) and full(s) != s: out.append((full(s), False))
     return [v for v in out if v[0] and v[0] != s]
@@ -97,7 +110,7 @@ LEAD = 3.0        # among several places of one name: the largest wins if it is 
 
 def confidence(how):
     if how.startswith("unscharf"): return "low"
-    if how in ("exchange-only", "bei-only", "name+volume", "name+code") or how.startswith(("namensanfang", "weiler")): return "medium"
+    if how in ("exchange-only", "bei-only", "name+volume", "name+code", "name+size") or how.startswith(("namensanfang", "weiler")): return "medium"
     return "high"
 
 
@@ -118,7 +131,7 @@ def median(pairs):
         if acc >= half: return v
 
 
-def by_network(R, counts_net, final, first, out):
+def by_network(R, counts_net, final, first, out, weight):
     """#71: the keys that stay ambiguous, decided per network of the entry. Returns a report."""
     placed = {(loc, f): cand for loc, f, y, c, cand, how in final if cand and confidence(how) == "high"}
     amb = {(loc, f): first[loc][2] for loc, f, y, c, cand, how in final if how == "ambiguous" and len(first[loc][2]) > 1}
@@ -132,7 +145,14 @@ def by_network(R, counts_net, final, first, out):
             for k in ((f, code), ("", code)): pts[k].append((p["lat"], p["lon"], c))
     centre = {k: (median([(a, w) for a, b, w in v]), median([(b, w) for a, b, w in v]))
               for k, v in pts.items() if sum(w for a, b, w in v) >= CODE_MIN}
-    rep = collections.Counter(); rows = []
+    rep = collections.Counter(); rows = []; left = []
+    bfs = lambda cand: cand["bfs_today"].split(";")[0]
+
+    def add(loc, f, net, cand, how, c):
+        rep["placed"] += c; rep["method " + how] += c
+        b = bfs(cand); mn = R.mun.get(b)
+        rows.append((loc, f, net, cand["name"].replace("\t", " "), b, mn[0], cand["canton"], f'{mn[2]:.5f}', f'{mn[3]:.5f}',
+                     f'{cand["lat"]:.5f}', f'{cand["lon"]:.5f}', how, confidence(how), c))
 
     def nearest(alts, point, lim=NEAR_KM):
         d = sorted((dist_km(a, point), i) for i, a in enumerate(alts))
@@ -140,7 +160,6 @@ def by_network(R, counts_net, final, first, out):
 
     for loc, f, net, c, canton, code, words in todo:
         alts = amb[(loc, f)]; cand = None; how = ""
-        rep["entries"] += c
         if canton:
             cs = [a for a in alts if a["canton"] == canton]
             if cs: cand = R.pick(cs, "name", title(loc))[0]; how = "name+canton"
@@ -151,11 +170,34 @@ def by_network(R, counts_net, final, first, out):
             ex = R.exchange(words)
             # the register does not have every hamlet: only a candidate close to the exchange ("Niederwil", Cham)
             if ex: cand = nearest(alts, (ex["lat"], ex["lon"]), FUZZY_KM); how = "name+exchange"
-        if not cand: rep["open " + ("canton" if canton else "code" if code else "words" if words else "nothing")] += c; continue
-        rep["placed"] += c; rep["method " + how] += c
-        b = cand["bfs_today"].split(";")[0]; mn = R.mun.get(b)
-        rows.append((loc, f, net, cand["name"].replace("\t", " "), b, mn[0], cand["canton"], f'{mn[2]:.5f}', f'{mn[3]:.5f}',
-                     f'{cand["lat"]:.5f}', f'{cand["lon"]:.5f}', how, confidence(how), c))
+        if not cand: left.append((loc, f, net, c, "canton" if canton else "code" if code else "words")); continue
+        add(loc, f, net, cand, how, c)
+    # The entries the network does not decide (most have none: the heading was read without its canton). The
+    # entries that are decided say how many subscribers each place of the name has in a volume at most; a volume
+    # with far more undecided entries than every place but one ever had holds that one ("Teufen" with 396
+    # entries is the one in Appenzell, the hamlet in the canton of Zürich never had 30): name+size. "Reinach"
+    # stays open, both are large. Entries without a network have the key '' (the app reads a missing one as '').
+    total = {(loc, f): c for loc, f, y, c, cand, how in final if (loc, f) in amb}
+    for loc, f, net, c, *_ in todo: total[(loc, f)] -= c
+    left += [(loc, f, "", c, "nothing") for (loc, f), c in total.items() if c > 0]
+    book = lambda f: re.sub(r"^(P-260-1_\d)[ab]?_\d{4}$|_\d{4}(?:_\d)?$", r"\1", f)   # the volumes of one region
+    per = collections.Counter()                                           # (name, book, place, volume) -> entries
+    for r in rows: per[(key(title(r[0])), book(r[1]), r[4], r[1])] += r[-1]
+    most = collections.defaultdict(collections.Counter)                   # (name, book) -> place -> most entries
+    for (n, bk, b, f), c in per.items(): most[(n, bk)][b] = max(most[(n, bk)][b], c)
+    und = collections.Counter()
+    for loc, f, net, c, why in left:
+        if why == "nothing": und[(loc, f)] += c
+    for loc, f, net, c, why in left:
+        alts = amb[(loc, f)]; m = most.get((key(title(loc)), book(f)), {}); u = und[(loc, f)]
+        r = sorted(alts, key=lambda a: -m.get(bfs(a), 0)); tot = sum(weight[f].values()) or 1
+        # every other place of the name is known to be small, or lies outside the area of the volume
+        small = lambda a: SIZE_LEAD * m[bfs(a)] <= u if bfs(a) in m else weight[f][a["canton"]] < REGION * tot
+        # (not against a network that names another canton or code)
+        if why == "nothing" and u >= SIZE_MIN and m.get(bfs(r[0]), 0) >= u / 2 and all(small(a) for a in r[1:]):
+            add(loc, f, net, r[0], "name+size", c)
+        else: rep["open " + why] += c
+    rep["entries"] = sum(c for *_, c, _ in left) + rep["placed"] - rep["method name+size"]
     with open(f"{out}/places_net_load.tsv", "w", encoding="utf-8") as fh:        # COPY text format; key columns as exported
         for r in rows: fh.write("\t".join(str(v) for v in r[:-1]) + "\n")
     with open(f"{out}/places_net.tsv", "w", encoding="utf-8") as fh:
@@ -220,6 +262,10 @@ class Resolver:
         name, _, canton = ALIAS.get(key(name), name).partition("|")     # "Biel|BE": the other name leaves no doubt
         cs, how = self.g.candidates(name)
         if canton: cs = [c for c in cs if c["canton"] == canton]
+        if not cs and self.g is self.base and key(name) in PRINTED:     # only for a name the register does not know
+            name, _, canton = PRINTED[key(name)].partition("|")
+            cs, how = self.g.candidates(name)
+            cs = [c for c in cs if c["canton"] == canton]; how = "alias"
         if not cs:
             for rx, rep in EXPAND:
                 n2 = re.sub(rx, rep, name)
@@ -266,9 +312,20 @@ class Resolver:
 
     def resolve(self, raw):
         """resolve_one, and for a string it does not know the same string read another way (#27)."""
-        cand, how = self.resolve_one(raw)
-        if cand or how != "unknown": return cand, how
         s = raw.strip()
+        if TURNED.match(s):             # "Stammheim, Ober-" is Oberstammheim before "Stammheim" is looked up
+            self.alts = []; self.fuzzy = False; self.whole = False
+            cand, how = self.resolve_one(variants(s, self.full)[0][0])
+            if cand and how.split("+")[0] in ("name", "alias"): return cand, how     # as printed, no similar spelling
+        cand, how = self.resolve_one(raw)
+        if how == "exchange-only":      # shown at its exchange: a hamlet of the name close to that exchange is better
+            keep = (self.alts, self.fuzzy, self.whole); self.g = self.gh
+            try: c2, h2 = self.resolve_one(s)
+            finally: self.g = self.base
+            self.alts, self.fuzzy, self.whole = keep
+            if c2 and c2["kind"] == "weiler" and h2 == "name+exchange" and dist_km(c2, (cand["lat"], cand["lon"])) <= FUZZY_KM:
+                return c2, "weiler+exchange"
+        if cand or how != "unknown": return cand, how
         if ABROAD.search(s): return None, "out-of-region"
         keep = (self.alts, self.fuzzy, self.whole)
         try:
@@ -455,7 +512,7 @@ def main():
         esc = lambda v: str(v).replace("\\", "\\\\").replace("\t", " ")
         for r in rows:
             if r[3]: f.write("\t".join(esc(r[i]) for i in (0, 1, 2, 3, 4, 5, 8, 9, 6, 7, 10, 11)) + "\n")
-    net = by_network(R, sys.argv[3], final, first, out) if len(sys.argv) > 3 else None
+    net = by_network(R, sys.argv[3], final, first, out, weight) if len(sys.argv) > 3 else None
     rep = dict(rep); rep["by_network"] = net; rep["by_decade"] = {d: dict(v) for d, v in sorted(bydec.items())}
     json.dump(rep, open(f"{out}/report.json", "w"), indent=1, ensure_ascii=False)
     E = rep["entries"]

@@ -158,6 +158,8 @@
 	// the map of the hits (#45): asked for only when it is opened
 	type MapData = {
 		places: MapPlace[];
+		/** hits per year of the whole result; not with the answer for a single year */
+		years?: { year: number; n: number }[];
 		total: number;
 		shown: number;
 		noLocality: number;
@@ -170,6 +172,57 @@
 	let mapFailed = $state(false);
 	let mapData = $state<MapData>();
 	let mapYear = $state(1937);
+	// the slider of the map (#6): one year of the result instead of all; the list is not narrowed
+	let mapOnly = $state<{ year: number; data?: MapData }>();
+	const mapYears = $derived(mapData?.years ?? []);
+	const mapView = $derived(mapOnly?.data ?? mapData);
+	// (a plain map: nothing on the page depends on what is in it)
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	const yearMaps = new Map<number, MapData>();
+	let yearTimer: ReturnType<typeof setTimeout> | undefined;
+	const defaultMapYear = () => Math.min(1950, Math.max(1880, Number(lastQuery?.get('to')) || 1950));
+
+	function allYears() {
+		clearTimeout(yearTimer);
+		mapOnly = undefined;
+		mapYear = defaultMapYear();
+	}
+
+	async function loadYear(year: number) {
+		if (!lastQuery) return;
+		try {
+			if (!yearMaps.has(year)) {
+				const body = new FormData();
+				for (const [key, value] of lastQuery) if (key !== 'place') body.append(key, value);
+				body.append('mapyear', String(year));
+				const response = await fetch('?/map', {
+					method: 'POST',
+					body,
+					headers: { 'x-sveltekit-action': 'true' }
+				});
+				const result = deserialize(await response.text());
+				if (result.type !== 'success' || !result.data?.map) return;
+				yearMaps.set(year, result.data.map as MapData);
+			}
+			// only if the reader has not moved on in the meantime
+			if (mapOnly?.year === year) {
+				mapOnly = { year, data: yearMaps.get(year) };
+				mapYear = year;
+			}
+		} catch {
+			// the map keeps what it shows
+		}
+	}
+
+	/** The slider rests on the year with this index among the years that have hits. */
+	function onlyYear(index: number) {
+		const year = mapYears[index]?.year;
+		if (year === undefined) return;
+		mapOnly = { year, data: mapOnly?.data };
+		clearTimeout(yearTimer);
+		if (yearMaps.has(year)) void loadYear(year);
+		else yearTimer = setTimeout(() => void loadYear(year), 200);
+	}
 	// a click on a circle narrows the list to that municipality; the map keeps the whole result
 	let picked = $state<{ bfs: number; name: string }>();
 	let keepMap = false;
@@ -222,7 +275,7 @@
 			if (result.type === 'success' && result.data?.map) {
 				mapData = result.data.map as MapData;
 				// the map as it was at the end of the years searched (swisstopo has one state per year)
-				mapYear = Math.min(1950, Math.max(1880, Number(lastQuery.get('to')) || 1950));
+				mapYear = defaultMapYear();
 			} else {
 				mapFailed = true;
 			}
@@ -313,6 +366,9 @@
 			picked = undefined;
 			streetData = undefined;
 			mapData = undefined;
+			mapOnly = undefined;
+			yearMaps.clear();
+			clearTimeout(yearTimer);
 			mapOpen = false;
 			mapFailed = false;
 		}
@@ -644,30 +700,65 @@
 	<div class="container mx-auto px-4 pb-6" data-testid="map-panel">
 		{#if mapLoading}
 			<p class="py-2">{m.map_loading()}</p>
-		{:else if mapFailed || !mapData}
+		{:else if mapFailed || !mapData || !mapView}
 			<p class="py-2" role="alert" data-testid="map-error">{m.map_unavailable()}</p>
 		{:else}
 			<p class="py-2" data-testid="map-shown">
 				{m.map_shown({
-					shown: formatNumber(mapData.shown),
-					total: formatNumber(mapData.total),
-					places: formatNumber(mapData.places.length)
+					shown: formatNumber(mapView.shown),
+					total: formatNumber(mapView.total),
+					places: formatNumber(mapView.places.length)
 				})}
-				{#if mapData.noLocality > 0}
+				{#if mapView.noLocality > 0}
 					<span data-testid="map-no-locality">
-						{m.map_no_locality({ count: formatNumber(mapData.noLocality) })}
+						{m.map_no_locality({ count: formatNumber(mapView.noLocality) })}
 					</span>
 				{/if}
-				{#if mapData.unresolved > 0}
+				{#if mapView.unresolved > 0}
 					<span data-testid="map-unresolved">
-						{m.map_unresolved({ count: formatNumber(mapData.unresolved) })}
+						{m.map_unresolved({ count: formatNumber(mapView.unresolved) })}
 					</span>
 				{/if}
 			</p>
-			{#if mapData.places.length > 0}
+			{#if mapYears.length > 1}
+				<div class="flex flex-wrap items-center gap-3 pb-2" data-testid="map-years">
+					<label class="font-bold" for="map-year">{m.map_year_label()}</label>
+					<input
+						id="map-year"
+						class="min-w-40 flex-1"
+						type="range"
+						min="0"
+						max={mapYears.length - 1}
+						step="1"
+						value={mapOnly
+							? mapYears.findIndex((row) => row.year === mapOnly!.year)
+							: mapYears.length - 1}
+						data-testid="map-year"
+						aria-valuetext={mapOnly ? String(mapOnly.year) : m.map_year_all()}
+						oninput={(event) => onlyYear(Number(event.currentTarget.value))}
+					/>
+					<output class="font-bold" for="map-year" data-testid="map-year-shown">
+						{mapOnly ? mapOnly.year : m.map_year_all()}
+					</output>
+					{#if mapOnly}
+						<button
+							class="rounded-full border border-current px-3"
+							data-testid="map-year-all"
+							onclick={allYears}
+						>
+							{m.map_year_all()} ×
+						</button>
+					{/if}
+				</div>
+				<p class="pb-2 text-sm" data-testid="map-year-note">
+					{mapOnly ? m.map_year_only({ year: String(mapOnly.year) }) : m.map_year_hint()}
+				</p>
+			{/if}
+			{#if mapView.places.length > 0}
 				<ResultMap
-					places={mapData.places}
+					places={mapView.places}
 					year={mapYear}
+					keepView={mapYears.length > 1}
 					selected={picked?.bfs}
 					streets={streetData?.available ? streetData.streets : undefined}
 					onpick={pick}
@@ -685,7 +776,7 @@
 				<!-- the same as text, for those who do not use the map -->
 				<p class="pt-3 font-bold">{m.map_largest()}</p>
 				<ul class="flex flex-wrap gap-2 py-2" data-testid="map-list">
-					{#each mapData.places.slice(0, 12) as place (place.bfs)}
+					{#each mapView.places.slice(0, 12) as place (place.bfs)}
 						<li>
 							<button class="rounded-full border border-current px-3" onclick={() => pick(place)}>
 								{place.name}

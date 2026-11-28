@@ -21,6 +21,13 @@
 		>
 			{m.coverage_nav()}
 		</a>
+		<a
+			class="flex h-10 items-center rounded-full border border-current px-4"
+			href={localizeHref('/map')}
+			data-testid="nav-map"
+		>
+			{m.netmap_nav()}
+		</a>
 		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		<button
 			class="h-10 rounded-full border border-current px-4"

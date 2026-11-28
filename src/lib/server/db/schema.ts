@@ -128,6 +128,22 @@ export const codeYears = pgTable(
 	(table) => [primaryKey({ columns: [table.year, table.code] })]
 );
 
+/** Entries per year and municipality of today (bfs 0: not on the map), filled by db/place_year.sql (#6). */
+export const placeYear = pgTable(
+	'place_year',
+	{ year: integer().notNull(), bfs: integer().notNull(), entries: integer().notNull() },
+	(table) => [primaryKey({ columns: [table.year, table.bfs] })]
+);
+
+/** Name and point of a municipality of today, filled by db/place_year.sql (#6). */
+export const municipalities = pgTable('municipalities', {
+	bfs: integer().primaryKey(),
+	name: text().notNull(),
+	canton: text().notNull(),
+	lat: real().notNull(),
+	lon: real().notNull()
+});
+
 /** Where a locality string of a volume is: filled by geo/build.sh after every import (#43). */
 export const places = pgTable(
 	'places',

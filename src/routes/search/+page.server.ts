@@ -63,7 +63,7 @@ async function run(where: SQL | undefined, order: SQL[], similarity?: SQL<number
  * point, and what cannot be shown. The table `places` knows where a locality string of a volume is (#43);
  * `places_net` knows it for the names a volume holds twice, by the network of the entry (#71).
  */
-async function placeCounts(where: SQL | undefined, approx: boolean) {
+async function placeCounts(where: SQL | undefined, approx: boolean, withYears: boolean) {
 	const db = getDb();
 	return await db.transaction(async (tx) => {
 		if (approx) await tx.execute(approxSetup);
@@ -120,8 +120,18 @@ async function placeCounts(where: SQL | undefined, approx: boolean) {
 			}))
 			.sort((a, b) => b.n - a.n);
 		const shown = placed.reduce((sum, row) => sum + row.n, 0);
+		// the hits per year, for the slider over the years of the result (#6)
+		const years = withYears
+			? await tx
+					.select({ year: records.year, n: count() })
+					.from(records)
+					.where(and(where, sql`${records.year} is not null`))
+					.groupBy(records.year)
+					.orderBy(asc(records.year))
+			: undefined;
 		return {
 			places: placed,
+			years: years as { year: number; n: number }[] | undefined,
 			total: shown + (unplaced?.n ?? 0),
 			shown,
 			noLocality: unplaced?.noLocality ?? 0,
@@ -304,10 +314,21 @@ export const actions: Actions = {
 
 	/** The same search, counted per municipality: asked for only when the map is opened. */
 	map: async (event) => {
-		const found = criteria(await event.request.formData(), false);
+		const formData = await event.request.formData();
+		const found = criteria(formData, false);
 		if ('error' in found) return fail(400, { error: found.error });
+		// one year of the result only: the slider of the map (#6)
+		const only = formData.get('mapyear');
+		let where = found.where;
+		if (typeof only === 'string' && only !== '') {
+			const year = Number(only);
+			if (!/^\d{4}$/.test(only) || year < 1880 || year > 1950) {
+				return fail(400, { error: 'map_unavailable' as const });
+			}
+			where = and(where, eq(records.year, year));
+		}
 		try {
-			return { map: await placeCounts(found.where, found.approx) };
+			return { map: await placeCounts(where, found.approx, where === found.where) };
 		} catch (e) {
 			// a very broad search runs into the time limit: no map, the list is not affected
 			console.error('map count failed', e);

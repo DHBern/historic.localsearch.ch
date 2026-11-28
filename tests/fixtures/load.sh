@@ -36,6 +36,8 @@ psql -X -t -c "select count(occupations) || ' entries with an occupation' from r
 GEO_OUT="$(mktemp -d)" ../../geo/build.sh >/dev/null
 # the area code of every place, from the entries that carry one (#50)
 psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS place_codes, code_years" -f ../../db/area_codes.sql >/dev/null
+# entries per year and municipality, for the map of the network (#6)
+psql -X -q -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS place_year, municipalities" -f ../../db/place_year.sql >/dev/null
 psql -X -t -c "select count(*) || ' place keys loaded' from places"
 psql -X -t -c "select count(*) || ' place keys with a network loaded' from places_net"
 psql -X -t -c "select count(*) || ' rows loaded' from records"

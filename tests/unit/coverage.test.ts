@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { missingVolumes, pageShare, volumeLabel } from '#lib/coverage.ts';
+import {
+	incompleteYears,
+	missingVolumes,
+	pageShare,
+	volumeLabel,
+	volumeYear
+} from '#lib/coverage.ts';
 
 describe('missingVolumes', () => {
 	it('names catalogue volumes without entries', () => {
@@ -31,5 +37,46 @@ describe('volumeLabel', () => {
 		expect(volumeLabel('P-260-1_Zuerich_1880')).toBe('Zuerich');
 		expect(volumeLabel('P-260-1_Basel_1881_2')).toBe('Basel 2');
 		expect(volumeLabel('P-260_Bern_ValdeTravers_1892')).toBe('Bern ValdeTravers');
+	});
+});
+
+describe('incomplete years (#6)', () => {
+	const volume = (file: string, year: number, pages: number, last: number, withFields = 1) => ({
+		file,
+		year,
+		pages,
+		firstPage: 1,
+		lastPage: last,
+		withFields
+	});
+
+	it('reads the year of a volume from its name', () => {
+		expect(volumeYear('P-260-1_Basel_1881_2')).toBe(1881);
+		expect(volumeYear('P-260-1_2a_1947')).toBe(1947);
+		expect(volumeYear('P-260_NetzgruppeBern_1903')).toBe(1903);
+		expect(volumeYear('nothing')).toBeNull();
+	});
+
+	it('names a year for a missing volume, pages without entries, or entries without a place', () => {
+		const years = incompleteYears(
+			[
+				volume('P-260-1_1_1930', 1930, 100, 100),
+				volume('P-260-1_2_1931', 1931, 100, 100),
+				volume('P-260-1_3_1919', 1919, 70, 100),
+				volume('P-260-1_1_1945', 1945, 100, 100, 0)
+			],
+			['P-260-1_1_1930', 'P-260-1_1_1931', 'P-260-1_2_1931', 'P-260-1_3_1919', 'P-260-1_1_1945']
+		);
+		expect(years).toEqual([
+			{ year: 1919, missing: [], gaps: ['3'], noFields: [] },
+			{ year: 1931, missing: ['1'], gaps: [], noFields: [] },
+			{ year: 1945, missing: [], gaps: [], noFields: ['1'] }
+		]);
+	});
+
+	it('leaves a whole year alone', () => {
+		expect(incompleteYears([volume('P-260-1_1_1930', 1930, 81, 100)], ['P-260-1_1_1930'])).toEqual(
+			[]
+		);
 	});
 });
